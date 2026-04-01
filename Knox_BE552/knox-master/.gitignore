@@ -1,0 +1,14 @@
+.idea
+target
+*.iml
+*.class
+*.jar
+*.pyc
+*.project
+*.settings
+*.classpath
+.DS_Store
+**/node_modules
+**package-lock.json
+logs
+desktop.ini

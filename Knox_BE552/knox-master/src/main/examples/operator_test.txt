@@ -1,0 +1,950 @@
+CREATE (d0a:DesignSpace {spaceID: "test1a", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0a:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1a:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0a)-[:CONTAINS]->(n0a)
+CREATE (d0a)-[:CONTAINS]->(n1a)
+
+CREATE (n0a)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1a)
+
+CREATE (d0a)-[:ARCHIVES]->(b0a:Branch {branchID: "test1a"})-[:CONTAINS]->(c0a:Commit {commitID: "c0"})-[:CONTAINS]->(s0a:Snapshot {nodeIndex: 2})
+CREATE (d0a)-[:SELECTS]->(b0a)-[:LATEST]->(c0a)
+
+CREATE (sn0a:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1a:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0a)-[:CONTAINS]->(sn0a)
+CREATE (s0a)-[:CONTAINS]->(sn1a)
+
+CREATE (sn0a)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1a)
+
+
+CREATE (d0b:DesignSpace {spaceID: "test1b", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0b:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1b:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0b)-[:CONTAINS]->(n0b)
+CREATE (d0b)-[:CONTAINS]->(n1b)
+
+CREATE (n0b)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n1b)
+
+CREATE (d0b)-[:ARCHIVES]->(b0b:Branch {branchID: "test1b"})-[:CONTAINS]->(c0b:Commit {commitID: "c0"})-[:CONTAINS]->(s0b:Snapshot {nodeIndex: 2})
+CREATE (d0b)-[:SELECTS]->(b0b)-[:LATEST]->(c0b)
+
+CREATE (sn0b:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1b:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0b)-[:CONTAINS]->(sn0b)
+CREATE (s0b)-[:CONTAINS]->(sn1b)
+
+CREATE (sn0b)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1b)
+
+
+CREATE (d0c:DesignSpace {spaceID: "test1c", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0c:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1c:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0c)-[:CONTAINS]->(n0c)
+CREATE (d0c)-[:CONTAINS]->(n1c)
+
+CREATE (n0c)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n1c)
+
+CREATE (d0c)-[:ARCHIVES]->(b0c:Branch {branchID: "test1c"})-[:CONTAINS]->(c0c:Commit {commitID: "c0"})-[:CONTAINS]->(s0c:Snapshot {nodeIndex: 2})
+CREATE (d0c)-[:SELECTS]->(b0c)-[:LATEST]->(c0c)
+
+CREATE (sn0c:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1c:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0c)-[:CONTAINS]->(sn0c)
+CREATE (s0c)-[:CONTAINS]->(sn1c)
+
+CREATE (sn0c)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1c)
+
+
+CREATE (d0d:DesignSpace {spaceID: "test1d", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0d:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1d:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0d)-[:CONTAINS]->(n0d)
+CREATE (d0d)-[:CONTAINS]->(n1d)
+
+CREATE (n0d)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(n1d)
+
+CREATE (d0d)-[:ARCHIVES]->(b0d:Branch {branchID: "test1d"})-[:CONTAINS]->(c0d:Commit {commitID: "c0"})-[:CONTAINS]->(s0d:Snapshot {nodeIndex: 2})
+CREATE (d0d)-[:SELECTS]->(b0d)-[:LATEST]->(c0d)
+
+CREATE (sn0d:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1d:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0d)-[:CONTAINS]->(sn0d)
+CREATE (s0d)-[:CONTAINS]->(sn1d)
+
+CREATE (sn0d)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1d)
+
+
+CREATE (d0ac:DesignSpace {spaceID: "test1ac", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0ac:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1ac:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2ac:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0ac)-[:CONTAINS]->(n0ac)
+CREATE (d0ac)-[:CONTAINS]->(n1ac)
+CREATE (d0ac)-[:CONTAINS]->(n2ac)
+
+CREATE (n0ac)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1ac)
+CREATE (n1ac)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2ac)
+
+CREATE (d0ac)-[:ARCHIVES]->(b0ac:Branch {branchID: "test1ac"})-[:CONTAINS]->(c0ac:Commit {commitID: "c0"})-[:CONTAINS]->(s0ac:Snapshot {nodeIndex: 3})
+CREATE (d0ac)-[:SELECTS]->(b0ac)-[:LATEST]->(c0ac)
+
+CREATE (sn0ac:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1ac:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2ac:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0ac)-[:CONTAINS]->(sn0ac)
+CREATE (s0ac)-[:CONTAINS]->(sn1ac)
+CREATE (s0ac)-[:CONTAINS]->(sn2ac)
+
+CREATE (sn0ac)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1ac)
+CREATE (sn1ac)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2ac)
+
+
+CREATE (d0e:DesignSpace {spaceID: "test2e", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0e:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1e:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0e)-[:CONTAINS]->(n0e)
+CREATE (d0e)-[:CONTAINS]->(n1e)
+
+CREATE (n0e)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1e)
+CREATE (n0e)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(n1e)
+
+CREATE (d0e)-[:ARCHIVES]->(b0e:Branch {branchID: "test2e"})-[:CONTAINS]->(c0e:Commit {commitID: "c0"})-[:CONTAINS]->(s0e:Snapshot {nodeIndex: 2})
+CREATE (d0e)-[:SELECTS]->(b0e)-[:LATEST]->(c0e)
+
+CREATE (sn0e:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1e:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0e)-[:CONTAINS]->(sn0e)
+CREATE (s0e)-[:CONTAINS]->(sn1e)
+
+CREATE (sn0e)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1e)
+CREATE (sn0e)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(sn1e)
+
+
+CREATE (d0f:DesignSpace {spaceID: "test2f", nodeIndex: 2, commitIndex: 1})
+
+CREATE (n0f:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1f:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (d0f)-[:CONTAINS]->(n0f)
+CREATE (d0f)-[:CONTAINS]->(n1f)
+
+CREATE (n0f)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n1f)
+CREATE (n0f)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(n1f)
+
+CREATE (d0f)-[:ARCHIVES]->(b0f:Branch {branchID: "test2f"})-[:CONTAINS]->(c0f:Commit {commitID: "c0"})-[:CONTAINS]->(s0f:Snapshot {nodeIndex: 2})
+CREATE (d0f)-[:SELECTS]->(b0f)-[:LATEST]->(c0f)
+
+CREATE (sn0f:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1f:Node {nodeID: "n1", nodeTypes: ["accept"]})
+
+CREATE (s0f)-[:CONTAINS]->(sn0f)
+CREATE (s0f)-[:CONTAINS]->(sn1f)
+
+CREATE (sn0f)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1f)
+CREATE (sn0f)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(sn1f)
+
+
+CREATE (d0g:DesignSpace {spaceID: "test3g", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0g:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1g:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (n2g:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0g)-[:CONTAINS]->(n0g)
+CREATE (d0g)-[:CONTAINS]->(n1g)
+CREATE (d0g)-[:CONTAINS]->(n2g)
+
+CREATE (n0g)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1g)
+CREATE (n0g)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2g)
+
+CREATE (d0g)-[:ARCHIVES]->(b0g:Branch {branchID: "test3g"})-[:CONTAINS]->(c0g:Commit {commitID: "c0"})-[:CONTAINS]->(s0g:Snapshot {nodeIndex: 3})
+CREATE (d0g)-[:SELECTS]->(b0g)-[:LATEST]->(c0g)
+
+CREATE (sn0g:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1g:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (sn2g:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0g)-[:CONTAINS]->(sn0g)
+CREATE (s0g)-[:CONTAINS]->(sn1g)
+CREATE (s0g)-[:CONTAINS]->(sn2g)
+
+CREATE (sn0g)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1g)
+CREATE (sn0g)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2g)
+
+
+CREATE (d0h:DesignSpace {spaceID: "test4h", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0h:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1h:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (n2h:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0h)-[:CONTAINS]->(n0h)
+CREATE (d0h)-[:CONTAINS]->(n1h)
+CREATE (d0h)-[:CONTAINS]->(n2h)
+
+CREATE (n0h)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1h)
+CREATE (n1h)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2h)
+
+CREATE (d0h)-[:ARCHIVES]->(b0h:Branch {branchID: "test4h"})-[:CONTAINS]->(c0h:Commit {commitID: "c0"})-[:CONTAINS]->(s0h:Snapshot {nodeIndex: 3})
+CREATE (d0h)-[:SELECTS]->(b0h)-[:LATEST]->(c0h)
+
+CREATE (sn0h:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1h:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (sn2h:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0h)-[:CONTAINS]->(sn0h)
+CREATE (s0h)-[:CONTAINS]->(sn1h)
+CREATE (s0h)-[:CONTAINS]->(sn2h)
+
+CREATE (sn0h)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1h)
+CREATE (sn1h)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2h)
+
+
+CREATE (d0i:DesignSpace {spaceID: "test5i", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0i:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1i:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (n2i:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0i)-[:CONTAINS]->(n0i)
+CREATE (d0i)-[:CONTAINS]->(n1i)
+CREATE (d0i)-[:CONTAINS]->(n2i)
+
+CREATE (n0i)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1i)
+CREATE (n1i)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2i)
+CREATE (n1i)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(n2i)
+
+CREATE (d0i)-[:ARCHIVES]->(b0i:Branch {branchID: "test5i"})-[:CONTAINS]->(c0i:Commit {commitID: "c0"})-[:CONTAINS]->(s0i:Snapshot {nodeIndex: 3})
+CREATE (d0i)-[:SELECTS]->(b0i)-[:LATEST]->(c0i)
+
+CREATE (sn0i:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1i:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (sn2i:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0i)-[:CONTAINS]->(sn0i)
+CREATE (s0i)-[:CONTAINS]->(sn1i)
+CREATE (s0i)-[:CONTAINS]->(sn2i)
+
+CREATE (sn0i)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1i)
+CREATE (sn1i)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2i)
+CREATE (sn1i)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(sn2i)
+
+
+CREATE (d0j:DesignSpace {spaceID: "test6j", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0j:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1j:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (n2j:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3j:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0j)-[:CONTAINS]->(n0j)
+CREATE (d0j)-[:CONTAINS]->(n1j)
+CREATE (d0j)-[:CONTAINS]->(n2j)
+CREATE (d0j)-[:CONTAINS]->(n3j)
+
+CREATE (n0j)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1j)
+CREATE (n1j)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2j)
+CREATE (n1j)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3j)
+
+CREATE (d0j)-[:ARCHIVES]->(b0j:Branch {branchID: "test6j"})-[:CONTAINS]->(c0j:Commit {commitID: "c0"})-[:CONTAINS]->(s0j:Snapshot {nodeIndex: 4})
+CREATE (d0j)-[:SELECTS]->(b0j)-[:LATEST]->(c0j)
+
+CREATE (sn0j:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1j:Node {nodeID: "n1", nodeTypes: ["accept"]})
+CREATE (sn2j:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3j:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0j)-[:CONTAINS]->(sn0j)
+CREATE (s0j)-[:CONTAINS]->(sn1j)
+CREATE (s0j)-[:CONTAINS]->(sn2j)
+CREATE (s0j)-[:CONTAINS]->(sn3j)
+
+CREATE (sn0j)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1j)
+CREATE (sn1j)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2j)
+CREATE (sn1j)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3j)
+
+
+CREATE (d0k:DesignSpace {spaceID: "test7k", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0k:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1k:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (n2k:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0k)-[:CONTAINS]->(n0k)
+CREATE (d0k)-[:CONTAINS]->(n1k)
+CREATE (d0k)-[:CONTAINS]->(n2k)
+
+CREATE (n0k)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1k)
+CREATE (n1k)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2k)
+
+CREATE (d0k)-[:ARCHIVES]->(b0k:Branch {branchID: "test7k"})-[:CONTAINS]->(c0k:Commit {commitID: "c0"})-[:CONTAINS]->(s0k:Snapshot {nodeIndex: 3})
+CREATE (d0k)-[:SELECTS]->(b0k)-[:LATEST]->(c0k)
+
+CREATE (sn0k:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1k:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (sn2k:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0k)-[:CONTAINS]->(sn0k)
+CREATE (s0k)-[:CONTAINS]->(sn1k)
+CREATE (s0k)-[:CONTAINS]->(sn2k)
+
+CREATE (sn0k)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1k)
+CREATE (sn1k)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2k)
+
+
+CREATE (d0l:DesignSpace {spaceID: "test8l", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0l:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1l:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (n2l:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0l)-[:CONTAINS]->(n0l)
+CREATE (d0l)-[:CONTAINS]->(n1l)
+CREATE (d0l)-[:CONTAINS]->(n2l)
+
+CREATE (n0l)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1l)
+CREATE (n0l)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(n1l)
+CREATE (n1l)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2l)
+
+CREATE (d0l)-[:ARCHIVES]->(b0l:Branch {branchID: "test8l"})-[:CONTAINS]->(c0l:Commit {commitID: "c0"})-[:CONTAINS]->(s0l:Snapshot {nodeIndex: 3})
+CREATE (d0l)-[:SELECTS]->(b0l)-[:LATEST]->(c0l)
+
+CREATE (sn0l:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1l:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (sn2l:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0l)-[:CONTAINS]->(sn0l)
+CREATE (s0l)-[:CONTAINS]->(sn1l)
+CREATE (s0l)-[:CONTAINS]->(sn2l)
+
+CREATE (sn0l)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1l)
+CREATE (sn0l)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "reverseComplement"}]->(sn1l)
+CREATE (sn1l)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2l)
+
+
+CREATE (d0m:DesignSpace {spaceID: "test9m", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0m:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1m:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (n2m:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3m:Node {nodeID: "n3", nodeTypes: []})
+
+CREATE (d0m)-[:CONTAINS]->(n0m)
+CREATE (d0m)-[:CONTAINS]->(n1m)
+CREATE (d0m)-[:CONTAINS]->(n2m)
+CREATE (d0m)-[:CONTAINS]->(n3m)
+
+CREATE (n0m)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1m)
+CREATE (n1m)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2m)
+CREATE (n0m)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3m)
+CREATE (n3m)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(n2m)
+
+CREATE (d0m)-[:ARCHIVES]->(b0m:Branch {branchID: "test9m"})-[:CONTAINS]->(c0m:Commit {commitID: "c0"})-[:CONTAINS]->(s0m:Snapshot {nodeIndex: 4})
+CREATE (d0m)-[:SELECTS]->(b0m)-[:LATEST]->(c0m)
+
+CREATE (sn0m:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1m:Node {nodeID: "n1", nodeTypes: ["start"]})
+CREATE (sn2m:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3m:Node {nodeID: "n3", nodeTypes: []})
+
+CREATE (s0m)-[:CONTAINS]->(sn0m)
+CREATE (s0m)-[:CONTAINS]->(sn1m)
+CREATE (s0m)-[:CONTAINS]->(sn2m)
+CREATE (s0m)-[:CONTAINS]->(sn3m)
+
+CREATE (sn0m)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1m)
+CREATE (sn1m)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2m)
+CREATE (sn0m)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3m)
+CREATE (sn3m)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2m)
+
+
+CREATE (d0n:DesignSpace {spaceID: "test10n", nodeIndex: 6, commitIndex: 1})
+
+CREATE (n0n:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1n:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2n:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3n:Node {nodeID: "n3", nodeTypes: []})
+CREATE (n4n:Node {nodeID: "n4", nodeTypes: []})
+CREATE (n5n:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (d0n)-[:CONTAINS]->(n0n)
+CREATE (d0n)-[:CONTAINS]->(n1n)
+CREATE (d0n)-[:CONTAINS]->(n2n)
+CREATE (d0n)-[:CONTAINS]->(n3n)
+CREATE (d0n)-[:CONTAINS]->(n4n)
+CREATE (d0n)-[:CONTAINS]->(n5n)
+
+CREATE (n0n)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1n)
+CREATE (n1n)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2n)
+CREATE (n2n)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3n)
+CREATE (n3n)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n4n)
+CREATE (n4n)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(n5n)
+
+CREATE (d0n)-[:ARCHIVES]->(b0n:Branch {branchID: "test10n"})-[:CONTAINS]->(c0n:Commit {commitID: "c0"})-[:CONTAINS]->(s0n:Snapshot {nodeIndex: 6})
+CREATE (d0n)-[:SELECTS]->(b0n)-[:LATEST]->(c0n)
+
+CREATE (sn0n:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1n:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2n:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3n:Node {nodeID: "n3", nodeTypes: []})
+CREATE (sn4n:Node {nodeID: "n4", nodeTypes: []})
+CREATE (sn5n:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (s0n)-[:CONTAINS]->(sn0n)
+CREATE (s0n)-[:CONTAINS]->(sn1n)
+CREATE (s0n)-[:CONTAINS]->(sn2n)
+CREATE (s0n)-[:CONTAINS]->(sn3n)
+CREATE (s0n)-[:CONTAINS]->(sn4n)
+CREATE (s0n)-[:CONTAINS]->(sn5n)
+
+CREATE (sn0n)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1n)
+CREATE (sn1n)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2n)
+CREATE (sn2n)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3n)
+CREATE (sn3n)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn4n)
+CREATE (sn4n)-[:PRECEDES {componentIDs: ["D"], componentRoles: ["CDS"], orientation: "inline"}]->(sn5n)
+
+
+CREATE (d0o:DesignSpace {spaceID: "test11o", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0o:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1o:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2o:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3o:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0o)-[:CONTAINS]->(n0o)
+CREATE (d0o)-[:CONTAINS]->(n1o)
+CREATE (d0o)-[:CONTAINS]->(n2o)
+CREATE (d0o)-[:CONTAINS]->(n3o)
+
+CREATE (n0o)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n1o)
+CREATE (n1o)-[:PRECEDES {componentIDs: ["E"], componentRoles: ["CDS"], orientation: "inline"}]->(n2o)
+CREATE (n2o)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n3o)
+
+CREATE (d0o)-[:ARCHIVES]->(b0o:Branch {branchID: "test11o"})-[:CONTAINS]->(c0o:Commit {commitID: "c0"})-[:CONTAINS]->(s0o:Snapshot {nodeIndex: 4})
+CREATE (d0o)-[:SELECTS]->(b0o)-[:LATEST]->(c0o)
+
+CREATE (sn0o:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1o:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2o:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3o:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0o)-[:CONTAINS]->(sn0o)
+CREATE (s0o)-[:CONTAINS]->(sn1o)
+CREATE (s0o)-[:CONTAINS]->(sn2o)
+CREATE (s0o)-[:CONTAINS]->(sn3o)
+
+CREATE (sn0o)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1o)
+CREATE (sn1o)-[:PRECEDES {componentIDs: ["E"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2o)
+CREATE (sn2o)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3o)
+
+
+CREATE (d0p:DesignSpace {spaceID: "test12p", nodeIndex: 6, commitIndex: 1})
+
+CREATE (n0p:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1p:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2p:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3p:Node {nodeID: "n3", nodeTypes: []})
+CREATE (n4p:Node {nodeID: "n4", nodeTypes: []})
+CREATE (n5p:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (d0p)-[:CONTAINS]->(n0p)
+CREATE (d0p)-[:CONTAINS]->(n1p)
+CREATE (d0p)-[:CONTAINS]->(n2p)
+CREATE (d0p)-[:CONTAINS]->(n3p)
+CREATE (d0p)-[:CONTAINS]->(n4p)
+CREATE (d0p)-[:CONTAINS]->(n5p)
+
+CREATE (n0p)-[:PRECEDES {componentIDs: ["A", "W"], componentRoles: ["CDS"], orientation: "inline"}]->(n1p)
+CREATE (n1p)-[:PRECEDES {componentIDs: ["B", "X"], componentRoles: ["CDS"], orientation: "inline"}]->(n2p)
+CREATE (n2p)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3p)
+CREATE (n3p)-[:PRECEDES {componentIDs: ["D", "Y"], componentRoles: ["CDS"], orientation: "inline"}]->(n4p)
+CREATE (n4p)-[:PRECEDES {componentIDs: ["E", "Z"], componentRoles: ["CDS"], orientation: "inline"}]->(n5p)
+
+CREATE (d0p)-[:ARCHIVES]->(b0p:Branch {branchID: "test12p"})-[:CONTAINS]->(c0p:Commit {commitID: "c0"})-[:CONTAINS]->(s0p:Snapshot {nodeIndex: 6})
+CREATE (d0p)-[:SELECTS]->(b0p)-[:LATEST]->(c0p)
+
+CREATE (sn0p:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1p:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2p:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3p:Node {nodeID: "n3", nodeTypes: []})
+CREATE (sn4p:Node {nodeID: "n4", nodeTypes: []})
+CREATE (sn5p:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (s0p)-[:CONTAINS]->(sn0p)
+CREATE (s0p)-[:CONTAINS]->(sn1p)
+CREATE (s0p)-[:CONTAINS]->(sn2p)
+CREATE (s0p)-[:CONTAINS]->(sn3p)
+CREATE (s0p)-[:CONTAINS]->(sn4p)
+CREATE (s0p)-[:CONTAINS]->(sn5p)
+
+CREATE (sn0p)-[:PRECEDES {componentIDs: ["A", "W"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1p)
+CREATE (sn1p)-[:PRECEDES {componentIDs: ["B", "X"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2p)
+CREATE (sn2p)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3p)
+CREATE (sn3p)-[:PRECEDES {componentIDs: ["D", "Y"], componentRoles: ["CDS"], orientation: "inline"}]->(sn4p)
+CREATE (sn4p)-[:PRECEDES {componentIDs: ["E", "Z"], componentRoles: ["CDS"], orientation: "inline"}]->(sn5p)
+
+
+CREATE (d0q:DesignSpace {spaceID: "test13q", nodeIndex: 6, commitIndex: 1})
+
+CREATE (n0q:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1q:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2q:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3q:Node {nodeID: "n3", nodeTypes: []})
+CREATE (n4q:Node {nodeID: "n4", nodeTypes: []})
+CREATE (n5q:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (d0q)-[:CONTAINS]->(n0q)
+CREATE (d0q)-[:CONTAINS]->(n1q)
+CREATE (d0q)-[:CONTAINS]->(n2q)
+CREATE (d0q)-[:CONTAINS]->(n3q)
+CREATE (d0q)-[:CONTAINS]->(n4q)
+CREATE (d0q)-[:CONTAINS]->(n5q)
+
+CREATE (n0q)-[:PRECEDES {componentIDs: ["A", "M"], componentRoles: ["CDS"], orientation: "inline"}]->(n1q)
+CREATE (n1q)-[:PRECEDES {componentIDs: ["B", "N"], componentRoles: ["CDS"], orientation: "inline"}]->(n2q)
+CREATE (n2q)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3q)
+CREATE (n3q)-[:PRECEDES {componentIDs: ["D", "O"], componentRoles: ["CDS"], orientation: "inline"}]->(n4q)
+CREATE (n4q)-[:PRECEDES {componentIDs: ["E", "P"], componentRoles: ["CDS"], orientation: "inline"}]->(n5q)
+
+CREATE (d0q)-[:ARCHIVES]->(b0q:Branch {branchID: "test13q"})-[:CONTAINS]->(c0q:Commit {commitID: "c0"})-[:CONTAINS]->(s0q:Snapshot {nodeIndex: 6})
+CREATE (d0q)-[:SELECTS]->(b0q)-[:LATEST]->(c0q)
+
+CREATE (sn0q:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1q:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2q:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3q:Node {nodeID: "n3", nodeTypes: []})
+CREATE (sn4q:Node {nodeID: "n4", nodeTypes: []})
+CREATE (sn5q:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (s0q)-[:CONTAINS]->(sn0q)
+CREATE (s0q)-[:CONTAINS]->(sn1q)
+CREATE (s0q)-[:CONTAINS]->(sn2q)
+CREATE (s0q)-[:CONTAINS]->(sn3q)
+CREATE (s0q)-[:CONTAINS]->(sn4q)
+CREATE (s0q)-[:CONTAINS]->(sn5q)
+
+CREATE (sn0q)-[:PRECEDES {componentIDs: ["A", "M"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1q)
+CREATE (sn1q)-[:PRECEDES {componentIDs: ["B", "N"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2q)
+CREATE (sn2q)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3q)
+CREATE (sn3q)-[:PRECEDES {componentIDs: ["D", "O"], componentRoles: ["CDS"], orientation: "inline"}]->(sn4q)
+CREATE (sn4q)-[:PRECEDES {componentIDs: ["E", "P"], componentRoles: ["CDS"], orientation: "inline"}]->(sn5q)
+
+
+CREATE (d0r:DesignSpace {spaceID: "test14r", nodeIndex: 6, commitIndex: 1})
+
+CREATE (n0r:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1r:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2r:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3r:Node {nodeID: "n3", nodeTypes: []})
+CREATE (n4r:Node {nodeID: "n4", nodeTypes: []})
+CREATE (n5r:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (d0r)-[:CONTAINS]->(n0r)
+CREATE (d0r)-[:CONTAINS]->(n1r)
+CREATE (d0r)-[:CONTAINS]->(n2r)
+CREATE (d0r)-[:CONTAINS]->(n3r)
+CREATE (d0r)-[:CONTAINS]->(n4r)
+CREATE (d0r)-[:CONTAINS]->(n5r)
+
+CREATE (n0r)-[:PRECEDES {componentIDs: ["A", "M"], componentRoles: ["CDS"], orientation: "inline"}]->(n1r)
+CREATE (n1r)-[:PRECEDES {componentIDs: ["B", "N"], componentRoles: ["CDS"], orientation: "inline"}]->(n2r)
+CREATE (n2r)-[:PRECEDES {componentIDs: ["K"], componentRoles: ["CDS"], orientation: "inline"}]->(n3r)
+CREATE (n3r)-[:PRECEDES {componentIDs: ["D", "O"], componentRoles: ["CDS"], orientation: "inline"}]->(n4r)
+CREATE (n4r)-[:PRECEDES {componentIDs: ["E", "P"], componentRoles: ["CDS"], orientation: "inline"}]->(n5r)
+
+CREATE (d0r)-[:ARCHIVES]->(b0r:Branch {branchID: "test14r"})-[:CONTAINS]->(c0r:Commit {commitID: "c0"})-[:CONTAINS]->(s0r:Snapshot {nodeIndex: 6})
+CREATE (d0r)-[:SELECTS]->(b0r)-[:LATEST]->(c0r)
+
+CREATE (sn0r:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1r:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2r:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3r:Node {nodeID: "n3", nodeTypes: []})
+CREATE (sn4r:Node {nodeID: "n4", nodeTypes: []})
+CREATE (sn5r:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (s0r)-[:CONTAINS]->(sn0r)
+CREATE (s0r)-[:CONTAINS]->(sn1r)
+CREATE (s0r)-[:CONTAINS]->(sn2r)
+CREATE (s0r)-[:CONTAINS]->(sn3r)
+CREATE (s0r)-[:CONTAINS]->(sn4r)
+CREATE (s0r)-[:CONTAINS]->(sn5r)
+
+CREATE (sn0r)-[:PRECEDES {componentIDs: ["A", "M"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1r)
+CREATE (sn1r)-[:PRECEDES {componentIDs: ["B", "N"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2r)
+CREATE (sn2r)-[:PRECEDES {componentIDs: ["K"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3r)
+CREATE (sn3r)-[:PRECEDES {componentIDs: ["D", "O"], componentRoles: ["CDS"], orientation: "inline"}]->(sn4r)
+CREATE (sn4r)-[:PRECEDES {componentIDs: ["E", "P"], componentRoles: ["CDS"], orientation: "inline"}]->(sn5r)
+
+
+CREATE (d0s:DesignSpace {spaceID: "test15s", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0s:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1s:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2s:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0s)-[:CONTAINS]->(n0s)
+CREATE (d0s)-[:CONTAINS]->(n1s)
+CREATE (d0s)-[:CONTAINS]->(n2s)
+
+CREATE (n0s)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1s)
+CREATE (n1s)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2s)
+
+CREATE (d0s)-[:ARCHIVES]->(b0s:Branch {branchID: "test15s"})-[:CONTAINS]->(c0s:Commit {commitID: "c0"})-[:CONTAINS]->(s0s:Snapshot {nodeIndex: 3})
+CREATE (d0s)-[:SELECTS]->(b0s)-[:LATEST]->(c0s)
+
+CREATE (sn0s:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1s:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2s:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0s)-[:CONTAINS]->(sn0s)
+CREATE (s0s)-[:CONTAINS]->(sn1s)
+CREATE (s0s)-[:CONTAINS]->(sn2s)
+
+CREATE (sn0s)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1s)
+CREATE (sn1s)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2s)
+
+
+CREATE (d0t:DesignSpace {spaceID: "test16t", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0t:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1t:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2t:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0t)-[:CONTAINS]->(n0t)
+CREATE (d0t)-[:CONTAINS]->(n1t)
+CREATE (d0t)-[:CONTAINS]->(n2t)
+
+CREATE (n0t)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1t)
+CREATE (n1t)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2t)
+CREATE (n1t)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n2t)
+
+CREATE (d0t)-[:ARCHIVES]->(b0t:Branch {branchID: "test16t"})-[:CONTAINS]->(c0t:Commit {commitID: "c0"})-[:CONTAINS]->(s0t:Snapshot {nodeIndex: 3})
+CREATE (d0t)-[:SELECTS]->(b0t)-[:LATEST]->(c0t)
+
+CREATE (sn0t:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1t:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2t:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0t)-[:CONTAINS]->(sn0t)
+CREATE (s0t)-[:CONTAINS]->(sn1t)
+CREATE (s0t)-[:CONTAINS]->(sn2t)
+
+CREATE (sn0t)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1t)
+CREATE (sn1t)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2t)
+CREATE (sn1t)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn2t)
+
+
+CREATE (d0u:DesignSpace {spaceID: "test17u", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0u:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1u:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2u:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3u:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0u)-[:CONTAINS]->(n0u)
+CREATE (d0u)-[:CONTAINS]->(n1u)
+CREATE (d0u)-[:CONTAINS]->(n2u)
+CREATE (d0u)-[:CONTAINS]->(n3u)
+
+CREATE (n0u)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1u)
+CREATE (n1u)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2u)
+CREATE (n1u)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n2u)
+CREATE (n2u)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3u)
+
+CREATE (d0u)-[:ARCHIVES]->(b0u:Branch {branchID: "test17u"})-[:CONTAINS]->(c0u:Commit {commitID: "c0"})-[:CONTAINS]->(s0u:Snapshot {nodeIndex: 4})
+CREATE (d0u)-[:SELECTS]->(b0u)-[:LATEST]->(c0u)
+
+CREATE (sn0u:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1u:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2u:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3u:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0u)-[:CONTAINS]->(sn0u)
+CREATE (s0u)-[:CONTAINS]->(sn1u)
+CREATE (s0u)-[:CONTAINS]->(sn2u)
+CREATE (s0u)-[:CONTAINS]->(sn3u)
+
+CREATE (sn0u)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1u)
+CREATE (sn1u)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2u)
+CREATE (sn1u)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn2u)
+CREATE (sn2u)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3u)
+
+
+CREATE (d0uu:DesignSpace {spaceID: "test17uu", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0uu:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1uu:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2uu:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3uu:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0uu)-[:CONTAINS]->(n0uu)
+CREATE (d0uu)-[:CONTAINS]->(n1uu)
+CREATE (d0uu)-[:CONTAINS]->(n2uu)
+CREATE (d0uu)-[:CONTAINS]->(n3uu)
+
+CREATE (n0uu)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1uu)
+CREATE (n1uu)-[:PRECEDES {componentIDs: ["X"], componentRoles: ["CDS"], orientation: "inline"}]->(n2uu)
+CREATE (n1uu)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n2uu)
+CREATE (n2uu)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3uu)
+
+CREATE (d0uu)-[:ARCHIVES]->(b0uu:Branch {branchID: "test17uu"})-[:CONTAINS]->(c0uu:Commit {commitID: "c0"})-[:CONTAINS]->(s0uu:Snapshot {nodeIndex: 4})
+CREATE (d0uu)-[:SELECTS]->(b0uu)-[:LATEST]->(c0uu)
+
+CREATE (sn0uu:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1uu:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2uu:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3uu:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0uu)-[:CONTAINS]->(sn0uu)
+CREATE (s0uu)-[:CONTAINS]->(sn1uu)
+CREATE (s0uu)-[:CONTAINS]->(sn2uu)
+CREATE (s0uu)-[:CONTAINS]->(sn3uu)
+
+CREATE (sn0uu)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1uu)
+CREATE (sn1uu)-[:PRECEDES {componentIDs: ["X"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2uu)
+CREATE (sn1uu)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn2uu)
+CREATE (sn2uu)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3uu)
+
+
+CREATE (d0v:DesignSpace {spaceID: "test18v", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0v:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1v:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2v:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (n3v:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0v)-[:CONTAINS]->(n0v)
+CREATE (d0v)-[:CONTAINS]->(n1v)
+CREATE (d0v)-[:CONTAINS]->(n2v)
+CREATE (d0v)-[:CONTAINS]->(n3v)
+
+CREATE (n0v)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1v)
+CREATE (n1v)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2v)
+CREATE (n1v)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n2v)
+CREATE (n2v)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n3v)
+
+CREATE (d0v)-[:ARCHIVES]->(b0v:Branch {branchID: "test18v"})-[:CONTAINS]->(c0v:Commit {commitID: "c0"})-[:CONTAINS]->(s0v:Snapshot {nodeIndex: 4})
+CREATE (d0v)-[:SELECTS]->(b0v)-[:LATEST]->(c0v)
+
+CREATE (sn0v:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1v:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2v:Node {nodeID: "n2", nodeTypes: ["accept"]})
+CREATE (sn3v:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0v)-[:CONTAINS]->(sn0v)
+CREATE (s0v)-[:CONTAINS]->(sn1v)
+CREATE (s0v)-[:CONTAINS]->(sn2v)
+CREATE (s0v)-[:CONTAINS]->(sn3v)
+
+CREATE (sn0v)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1v)
+CREATE (sn1v)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2v)
+CREATE (sn1v)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn2v)
+CREATE (sn2v)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3v)
+
+
+CREATE (d0w:DesignSpace {spaceID: "test19w", nodeIndex: 6, commitIndex: 1})
+
+CREATE (n0w:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1w:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2w:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3w:Node {nodeID: "n3", nodeTypes: []})
+CREATE (n4w:Node {nodeID: "n4", nodeTypes: []})
+CREATE (n5w:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (d0w)-[:CONTAINS]->(n0w)
+CREATE (d0w)-[:CONTAINS]->(n1w)
+CREATE (d0w)-[:CONTAINS]->(n2w)
+CREATE (d0w)-[:CONTAINS]->(n3w)
+CREATE (d0w)-[:CONTAINS]->(n4w)
+CREATE (d0w)-[:CONTAINS]->(n5w)
+
+CREATE (n0w)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(n1w)
+CREATE (n1w)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2w)
+CREATE (n2w)-[:PRECEDES {componentIDs: ["X"], componentRoles: ["CDS"], orientation: "inline"}]->(n3w)
+CREATE (n3w)-[:PRECEDES {componentIDs: ["Y"], componentRoles: ["CDS"], orientation: "inline"}]->(n4w)
+CREATE (n4w)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(n5w)
+CREATE (n1w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n2w)
+CREATE (n2w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n3w)
+CREATE (n3w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n4w)
+
+CREATE (d0w)-[:ARCHIVES]->(b0w:Branch {branchID: "test19w"})-[:CONTAINS]->(c0w:Commit {commitID: "c0"})-[:CONTAINS]->(s0w:Snapshot {nodeIndex: 6})
+CREATE (d0w)-[:SELECTS]->(b0w)-[:LATEST]->(c0w)
+
+CREATE (sn0w:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1w:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2w:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3w:Node {nodeID: "n3", nodeTypes: []})
+CREATE (sn4w:Node {nodeID: "n4", nodeTypes: []})
+CREATE (sn5w:Node {nodeID: "n5", nodeTypes: ["accept"]})
+
+CREATE (s0w)-[:CONTAINS]->(sn0w)
+CREATE (s0w)-[:CONTAINS]->(sn1w)
+CREATE (s0w)-[:CONTAINS]->(sn2w)
+CREATE (s0w)-[:CONTAINS]->(sn3w)
+CREATE (s0w)-[:CONTAINS]->(sn4w)
+CREATE (s0w)-[:CONTAINS]->(sn5w)
+
+CREATE (sn0w)-[:PRECEDES {componentIDs: ["A"], componentRoles: ["CDS"], orientation: "inline"}]->(sn1w)
+CREATE (sn1w)-[:PRECEDES {componentIDs: ["B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2w)
+CREATE (sn2w)-[:PRECEDES {componentIDs: ["X"], componentRoles: ["CDS"], orientation: "inline"}]->(sn3w)
+CREATE (sn3w)-[:PRECEDES {componentIDs: ["Y"], componentRoles: ["CDS"], orientation: "inline"}]->(sn4w)
+CREATE (sn4w)-[:PRECEDES {componentIDs: ["C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn5w)
+CREATE (sn1w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn2w)
+CREATE (sn2w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn3w)
+CREATE (sn3w)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn4w)
+
+
+CREATE (d0x:DesignSpace {spaceID: "test20x", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0x:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1x:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2x:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0x)-[:CONTAINS]->(n0x)
+CREATE (d0x)-[:CONTAINS]->(n1x)
+CREATE (d0x)-[:CONTAINS]->(n2x)
+
+CREATE (n0x)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1x)
+CREATE (n1x)-[:PRECEDES {componentIDs: ["A","B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2x)
+CREATE (n2x)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1x)
+
+CREATE (d0x)-[:ARCHIVES]->(b0x:Branch {branchID: "test20x"})-[:CONTAINS]->(c0x:Commit {commitID: "c0"})-[:CONTAINS]->(s0x:Snapshot {nodeIndex: 3})
+CREATE (d0x)-[:SELECTS]->(b0x)-[:LATEST]->(c0x)
+
+CREATE (sn0x:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1x:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2x:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0x)-[:CONTAINS]->(sn0x)
+CREATE (s0x)-[:CONTAINS]->(sn1x)
+CREATE (s0x)-[:CONTAINS]->(sn2x)
+
+CREATE (sn0x)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1x)
+CREATE (sn1x)-[:PRECEDES {componentIDs: ["A", "B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2x)
+CREATE (sn2x)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1x)
+
+
+CREATE (d0y:DesignSpace {spaceID: "test21y", nodeIndex: 3, commitIndex: 1})
+
+CREATE (n0y:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1y:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2y:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (d0y)-[:CONTAINS]->(n0y)
+CREATE (d0y)-[:CONTAINS]->(n1y)
+CREATE (d0y)-[:CONTAINS]->(n2y)
+
+CREATE (n0y)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1y)
+CREATE (n1y)-[:PRECEDES {componentIDs: ["B","C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2y)
+CREATE (n2y)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1y)
+
+CREATE (d0y)-[:ARCHIVES]->(b0y:Branch {branchID: "test21y"})-[:CONTAINS]->(c0y:Commit {commitID: "c0"})-[:CONTAINS]->(s0y:Snapshot {nodeIndex: 3})
+CREATE (d0y)-[:SELECTS]->(b0y)-[:LATEST]->(c0y)
+
+CREATE (sn0y:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1y:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2y:Node {nodeID: "n2", nodeTypes: ["accept"]})
+
+CREATE (s0y)-[:CONTAINS]->(sn0y)
+CREATE (s0y)-[:CONTAINS]->(sn1y)
+CREATE (s0y)-[:CONTAINS]->(sn2y)
+
+CREATE (sn0y)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1y)
+CREATE (sn1y)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2y)
+CREATE (sn2y)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1y)
+
+
+CREATE (d0z:DesignSpace {spaceID: "test22z", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0z:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1z:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2z:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3z:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0z)-[:CONTAINS]->(n0z)
+CREATE (d0z)-[:CONTAINS]->(n1z)
+CREATE (d0z)-[:CONTAINS]->(n2z)
+CREATE (d0z)-[:CONTAINS]->(n3z)
+
+CREATE (n0z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n3z)
+CREATE (n0z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1z)
+CREATE (n1z)-[:PRECEDES {componentIDs: ["A","B"], componentRoles: ["CDS"], orientation: "inline"}]->(n2z)
+CREATE (n2z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1z)
+CREATE (n2z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n3z)
+
+CREATE (d0z)-[:ARCHIVES]->(b0z:Branch {branchID: "test22z"})-[:CONTAINS]->(c0z:Commit {commitID: "c0"})-[:CONTAINS]->(s0z:Snapshot {nodeIndex: 4})
+CREATE (d0z)-[:SELECTS]->(b0z)-[:LATEST]->(c0z)
+
+CREATE (sn0z:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1z:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2z:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3z:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0z)-[:CONTAINS]->(sn0z)
+CREATE (s0z)-[:CONTAINS]->(sn1z)
+CREATE (s0z)-[:CONTAINS]->(sn2z)
+CREATE (s0z)-[:CONTAINS]->(sn3z)
+
+CREATE (sn0z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn3z)
+CREATE (sn0z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1z)
+CREATE (sn1z)-[:PRECEDES {componentIDs: ["A", "B"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2z)
+CREATE (sn2z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1z)
+CREATE (sn2z)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn3z)
+
+
+CREATE (d0aa:DesignSpace {spaceID: "test23aa", nodeIndex: 4, commitIndex: 1})
+
+CREATE (n0aa:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (n1aa:Node {nodeID: "n1", nodeTypes: []})
+CREATE (n2aa:Node {nodeID: "n2", nodeTypes: []})
+CREATE (n3aa:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (d0aa)-[:CONTAINS]->(n0aa)
+CREATE (d0aa)-[:CONTAINS]->(n1aa)
+CREATE (d0aa)-[:CONTAINS]->(n2aa)
+CREATE (d0aa)-[:CONTAINS]->(n3aa)
+
+CREATE (n0aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n3aa)
+CREATE (n0aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1aa)
+CREATE (n1aa)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(n2aa)
+CREATE (n2aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n1aa)
+CREATE (n2aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(n3aa)
+
+CREATE (d0aa)-[:ARCHIVES]->(b0aa:Branch {branchID: "test23aa"})-[:CONTAINS]->(c0aa:Commit {commitID: "c0"})-[:CONTAINS]->(s0aa:Snapshot {nodeIndex: 4})
+CREATE (d0aa)-[:SELECTS]->(b0aa)-[:LATEST]->(c0aa)
+
+CREATE (sn0aa:Node {nodeID: "n0", nodeTypes: ["start"]})
+CREATE (sn1aa:Node {nodeID: "n1", nodeTypes: []})
+CREATE (sn2aa:Node {nodeID: "n2", nodeTypes: []})
+CREATE (sn3aa:Node {nodeID: "n3", nodeTypes: ["accept"]})
+
+CREATE (s0aa)-[:CONTAINS]->(sn0aa)
+CREATE (s0aa)-[:CONTAINS]->(sn1aa)
+CREATE (s0aa)-[:CONTAINS]->(sn2aa)
+CREATE (s0aa)-[:CONTAINS]->(sn3aa)
+
+CREATE (sn0aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn3aa)
+CREATE (sn0aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1aa)
+CREATE (sn1aa)-[:PRECEDES {componentIDs: ["B", "C"], componentRoles: ["CDS"], orientation: "inline"}]->(sn2aa)
+CREATE (sn2aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn1aa)
+CREATE (sn2aa)-[:PRECEDES {componentIDs: [], componentRoles: [], orientation: "none"}]->(sn3aa)
+
+;

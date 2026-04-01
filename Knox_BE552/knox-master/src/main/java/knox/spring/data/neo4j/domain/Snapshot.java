@@ -1,0 +1,28 @@
+package knox.spring.data.neo4j.domain;
+
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class Snapshot extends NodeSpace {
+
+    public Snapshot() {
+    	
+    }
+
+    public Snapshot(int nodeIndex) { 
+    	super(nodeIndex); 
+    }
+    
+    public Snapshot copy() {
+    	Snapshot snapCopy = new Snapshot(super.nodeIndex);
+    	
+    	snapCopy.copyNodeSpace(this);
+    	
+    	return snapCopy;
+    }
+    
+    public Long getGraphID() {
+    	return id;
+    }
+}

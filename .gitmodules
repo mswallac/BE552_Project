@@ -1,0 +1,6 @@
+[submodule "generative-syn-bio"]
+	path = generative-syn-bio
+	url = https://github.com/joshkome/generative-syn-bio.git
+[submodule "MCPGeneBank"]
+	path = MCPGeneBank
+	url = https://github.com/Charmander542/MCPGeneBank.git
