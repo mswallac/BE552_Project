@@ -244,5 +244,83 @@ def upload_to_knox(
                 "message": f"Request to Knox timed out"}
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Sync biological parts from MCPGeneBank into Knox design spaces.",
+    )
+    parser.add_argument(
+        "--query", nargs="+", required=True,
+        help="One or more search queries (e.g., --query arsenic GFP)",
+    )
+    parser.add_argument("--limit", type=int, default=50, help="Max parts per query (default: 50)")
+    parser.add_argument("--knox-url", default="http://localhost:8080", help="Knox server URL")
+    parser.add_argument("--space-id", default="", help="Knox design space prefix (auto-generated if omitted)")
+    parser.add_argument("--group-id", default=None, help="Knox group ID")
+    parser.add_argument("--or-mode", action="store_true", help="Use OR import (merge into single design space)")
+    parser.add_argument("--dry-run", action="store_true", help="Generate CSVs without uploading to Knox")
+    parser.add_argument("--output", default="", help="Write CSV files to this path prefix (implies --dry-run)")
+    parser.add_argument(
+        "--mcpgenebank-dir", default="",
+        help="Path to MCPGeneBank/bio-circuit-ai/ (auto-detected if omitted)",
+    )
+    parser.add_argument("--demo-seed", action="store_true", help="Use demo seed data (no Qdrant needed)")
+
+    args = parser.parse_args(argv)
+
+    if args.output:
+        args.dry_run = True
+
+    space_prefix = args.space_id or "_".join(args.query)[:60].replace(" ", "_")
+
+    print(f"Fetching parts for queries: {args.query} (limit {args.limit} per query)...")
+    parts = fetch_parts(
+        queries=args.query,
+        limit=args.limit,
+        mcpgenebank_dir=args.mcpgenebank_dir,
+        use_demo_seed=args.demo_seed,
+    )
+    print(f"  Found {len(parts)} unique parts")
+
+    if not parts:
+        print("No parts found. Try broader queries or use --demo-seed.")
+        return 1
+
+    comp_csv, design_csv = generate_knox_csvs(parts)
+
+    if args.dry_run:
+        out_base = args.output or f"{space_prefix}_export"
+        comp_path = Path(f"{out_base}_components.csv")
+        design_path = Path(f"{out_base}_designs.csv")
+        comp_path.write_text(comp_csv)
+        design_path.write_text(design_csv)
+        print(f"  Components CSV: {comp_path}")
+        print(f"  Designs CSV:    {design_path}")
+        print("Dry run complete — files written, nothing uploaded.")
+        return 0
+
+    print(f"Uploading to Knox at {args.knox_url} as '{space_prefix}'...")
+    result = upload_to_knox(
+        comp_csv=comp_csv,
+        design_csv=design_csv,
+        space_prefix=space_prefix,
+        knox_url=args.knox_url,
+        group_id=args.group_id,
+        use_or=args.or_mode,
+    )
+
+    if result["success"]:
+        print(f"  {result['message']}")
+        print(f"  {len(parts)} parts loaded into Knox.")
+        return 0
+    else:
+        print(f"  FAILED: {result['message']}")
+        return 1
+
+
 if __name__ == "__main__":
-    pass
+    sys.exit(main())

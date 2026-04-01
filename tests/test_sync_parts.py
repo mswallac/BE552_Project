@@ -195,3 +195,24 @@ def test_build_upload_payload_no_group():
     files, data = build_upload_payload(comp_csv, design_csv, "sp", None)
 
     assert "groupID" not in data or data["groupID"] == "none"
+
+
+def test_main_dry_run(tmp_path):
+    """Test the full pipeline in dry-run mode (no Knox needed)."""
+    from sync_parts_to_knox import main
+
+    output_file = tmp_path / "export.csv"
+
+    exit_code = main([
+        "--query", "arsenic",
+        "--limit", "3",
+        "--dry-run",
+        "--output", str(output_file),
+        "--mcpgenebank-dir", str(Path(__file__).parent.parent / "MCPGeneBank" / "bio-circuit-ai"),
+        "--demo-seed",
+    ])
+
+    assert exit_code == 0
+    comp_file = tmp_path / "export.csv_components.csv"
+    design_file = tmp_path / "export.csv_designs.csv"
+    assert comp_file.exists() or (tmp_path / "export_components.csv").exists()
