@@ -118,5 +118,66 @@ def generate_knox_csvs(parts: list[dict]) -> tuple[str, str]:
     return comp_buf.getvalue(), design_buf.getvalue()
 
 
+# ---------------------------------------------------------------------------
+# Parts fetcher
+# ---------------------------------------------------------------------------
+
+
+def _setup_mcpgenebank_path(mcpgenebank_dir: str) -> None:
+    """Add MCPGeneBank's bio-circuit-ai directory to sys.path for imports."""
+    mcpdir = str(Path(mcpgenebank_dir).resolve())
+    if mcpdir not in sys.path:
+        sys.path.insert(0, mcpdir)
+
+
+def fetch_parts(
+    queries: list[str],
+    limit: int = 50,
+    mcpgenebank_dir: str = "",
+    use_demo_seed: bool = False,
+) -> list[dict]:
+    """
+    Fetch BioParts from MCPGeneBank's vector store.
+
+    Args:
+        queries: Search queries (e.g., ["arsenic", "GFP"]).
+        limit: Max results per query.
+        mcpgenebank_dir: Path to MCPGeneBank/bio-circuit-ai/.
+        use_demo_seed: If True, seed an in-memory store with demo data
+                       (no Qdrant needed).
+
+    Returns:
+        List of BioPart dicts with all fields.
+    """
+    if not mcpgenebank_dir:
+        mcpgenebank_dir = str(
+            Path(__file__).resolve().parent.parent / "MCPGeneBank" / "bio-circuit-ai"
+        )
+    _setup_mcpgenebank_path(mcpgenebank_dir)
+
+    if use_demo_seed:
+        from database.vector_store import VectorStore
+        store = VectorStore(in_memory=True)
+        from demo import SEED_PARTS
+        from models.part import BioPart
+        store.upsert_parts([BioPart(**d) for d in SEED_PARTS])
+    else:
+        from database.vector_store import get_vector_store
+        store = get_vector_store()
+
+    seen_ids: set[str] = set()
+    results: list[dict] = []
+
+    for query in queries:
+        hits = store.search(query=query, limit=limit)
+        for hit in hits:
+            pid = hit.get("part_id", "")
+            if pid and pid not in seen_ids:
+                seen_ids.add(pid)
+                results.append(hit)
+
+    return results
+
+
 if __name__ == "__main__":
     pass

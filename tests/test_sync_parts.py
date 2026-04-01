@@ -139,3 +139,27 @@ def test_generate_knox_csvs_empty():
     comp_reader = csv.reader(io.StringIO(comp_csv))
     comp_rows = list(comp_reader)
     assert comp_rows == [["id", "role", "sequence"]]
+
+
+from pathlib import Path
+
+def test_fetch_parts_from_demo_seed():
+    """
+    Integration test: requires MCPGeneBank to be importable.
+    Uses the demo seed data (in-memory vector store) so no Qdrant needed.
+    """
+    from sync_parts_to_knox import fetch_parts
+
+    parts = fetch_parts(
+        queries=["arsenic"],
+        limit=5,
+        mcpgenebank_dir=str(Path(__file__).parent.parent / "MCPGeneBank" / "bio-circuit-ai"),
+        use_demo_seed=True,
+    )
+
+    assert len(parts) > 0
+    assert all(isinstance(p, dict) for p in parts)
+    for p in parts:
+        assert "part_id" in p
+        assert "name" in p
+        assert "type" in p
