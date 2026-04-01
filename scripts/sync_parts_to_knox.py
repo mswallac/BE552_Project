@@ -12,6 +12,8 @@ import io
 import sys
 from pathlib import Path
 
+import json as _json
+
 import httpx
 
 # ---------------------------------------------------------------------------
@@ -182,6 +184,34 @@ def fetch_parts(
 
 
 # ---------------------------------------------------------------------------
+# Descriptions sidecar
+# ---------------------------------------------------------------------------
+
+
+def generate_descriptions_sidecar(parts: list[dict]) -> str:
+    """
+    Generate a JSON file mapping part_id to full metadata.
+
+    This preserves description, function, organism, references, and other
+    fields that don't fit in the Knox CSV encoding.
+    """
+    sidecar = {}
+    for p in parts:
+        sidecar[p["part_id"]] = {
+            "name": p.get("name", ""),
+            "type": p.get("type", ""),
+            "function": p.get("function", ""),
+            "description": p.get("description", ""),
+            "organism": p.get("organism", ""),
+            "source": p.get("source_database", ""),
+            "references": p.get("references", []),
+            "tags": p.get("tags", []),
+            "sequence_length": len(p.get("sequence", "")),
+        }
+    return _json.dumps(sidecar, indent=2)
+
+
+# ---------------------------------------------------------------------------
 # Knox uploader
 # ---------------------------------------------------------------------------
 
@@ -291,15 +321,19 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     comp_csv, design_csv = generate_knox_csvs(parts)
+    sidecar_json = generate_descriptions_sidecar(parts)
 
     if args.dry_run:
         out_base = args.output or f"{space_prefix}_export"
         comp_path = Path(f"{out_base}_components.csv")
         design_path = Path(f"{out_base}_designs.csv")
+        sidecar_path = Path(f"{out_base}_descriptions.json")
         comp_path.write_text(comp_csv)
         design_path.write_text(design_csv)
-        print(f"  Components CSV: {comp_path}")
-        print(f"  Designs CSV:    {design_path}")
+        sidecar_path.write_text(sidecar_json)
+        print(f"  Components CSV:    {comp_path}")
+        print(f"  Designs CSV:       {design_path}")
+        print(f"  Descriptions JSON: {sidecar_path}")
         print("Dry run complete — files written, nothing uploaded.")
         return 0
 
@@ -316,6 +350,9 @@ def main(argv: list[str] | None = None) -> int:
     if result["success"]:
         print(f"  {result['message']}")
         print(f"  {len(parts)} parts loaded into Knox.")
+        sidecar_path = Path(f"{space_prefix}_descriptions.json")
+        sidecar_path.write_text(sidecar_json)
+        print(f"  Descriptions JSON: {sidecar_path}")
         return 0
     else:
         print(f"  FAILED: {result['message']}")

@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import sys
 import os
 
@@ -216,3 +217,27 @@ def test_main_dry_run(tmp_path):
     comp_file = tmp_path / "export.csv_components.csv"
     design_file = tmp_path / "export.csv_designs.csv"
     assert comp_file.exists() or (tmp_path / "export_components.csv").exists()
+
+
+def test_generate_descriptions_sidecar():
+    from sync_parts_to_knox import generate_descriptions_sidecar
+
+    parts = [
+        _make_biopart("BBa_J23100", "Constitutive Promoter", "promoter",
+                       tags=["constitutive"], function="Strong constitutive promoter",
+                       description="Widely used in iGEM", organism="E. coli",
+                       source_database="igem", references=["https://parts.igem.org/Part:BBa_J23100"]),
+    ]
+
+    sidecar = generate_descriptions_sidecar(parts)
+    parsed = json.loads(sidecar)
+
+    assert "BBa_J23100" in parsed
+    entry = parsed["BBa_J23100"]
+    assert entry["name"] == "Constitutive Promoter"
+    assert entry["function"] == "Strong constitutive promoter"
+    assert entry["description"] == "Widely used in iGEM"
+    assert entry["organism"] == "E. coli"
+    assert entry["source"] == "igem"
+    assert "https://parts.igem.org/Part:BBa_J23100" in entry["references"]
+    assert entry["tags"] == ["constitutive"]
