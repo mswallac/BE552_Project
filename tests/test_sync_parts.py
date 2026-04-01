@@ -1,3 +1,5 @@
+import csv
+import io
 import sys
 import os
 
@@ -72,3 +74,68 @@ def test_decode_component_id_no_tags():
     assert part_id == "BBa_E0040"
     assert name == "GFP (Green Fluorescent Protein)"
     assert tags == []
+
+
+def _make_biopart(part_id, name, part_type, sequence="ATGC", tags=None, organism="E. coli",
+                  function="", description="", source_database="igem", references=None):
+    """Helper to create a dict mimicking BioPart.model_dump() output."""
+    return {
+        "part_id": part_id,
+        "name": name,
+        "type": part_type,
+        "sequence": sequence,
+        "tags": tags or [],
+        "organism": organism,
+        "function": function,
+        "description": description,
+        "source_database": source_database,
+        "references": references or [],
+    }
+
+
+def test_generate_knox_csvs():
+    from sync_parts_to_knox import generate_knox_csvs
+
+    parts = [
+        _make_biopart("BBa_J23100", "Constitutive Promoter", "promoter",
+                       sequence="TTGACAGC", tags=["constitutive"]),
+        _make_biopart("BBa_E0040", "GFP", "reporter",
+                       sequence="ATGAGTAAA", tags=["fluorescence", "green"]),
+        _make_biopart("BBa_B0034", "RBS B0034", "rbs",
+                       sequence="AAAGAG", tags=["translation"]),
+    ]
+
+    comp_csv, design_csv = generate_knox_csvs(parts)
+
+    # Parse components CSV
+    comp_reader = csv.reader(io.StringIO(comp_csv))
+    comp_rows = list(comp_reader)
+    assert comp_rows[0] == ["id", "role", "sequence"]
+    assert len(comp_rows) == 4  # header + 3 parts
+
+    # Check that componentIDs contain encoded metadata
+    assert "BBa_J23100__" in comp_rows[1][0]
+    assert comp_rows[1][1] == "promoter"
+    assert comp_rows[1][2] == "TTGACAGC"
+
+    assert "BBa_E0040__" in comp_rows[2][0]
+    assert comp_rows[2][1] == "cds"
+
+    assert "BBa_B0034__" in comp_rows[3][0]
+    assert comp_rows[3][1] == "ribosomeBindingSite"
+
+    # Parse designs CSV
+    design_reader = csv.reader(io.StringIO(design_csv))
+    design_rows = list(design_reader)
+    assert design_rows[0] == ["design"]
+    # Each part is its own single-part design row
+    assert len(design_rows) == 4  # header + 3 parts
+
+
+def test_generate_knox_csvs_empty():
+    from sync_parts_to_knox import generate_knox_csvs
+
+    comp_csv, design_csv = generate_knox_csvs([])
+    comp_reader = csv.reader(io.StringIO(comp_csv))
+    comp_rows = list(comp_reader)
+    assert comp_rows == [["id", "role", "sequence"]]

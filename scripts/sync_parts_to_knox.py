@@ -77,5 +77,46 @@ def decode_component_id(encoded: str) -> tuple[str, str, list[str]]:
     return part_id, name, tags
 
 
+# ---------------------------------------------------------------------------
+# Knox CSV generation
+# ---------------------------------------------------------------------------
+
+
+def generate_knox_csvs(parts: list[dict]) -> tuple[str, str]:
+    """
+    Generate Knox-compatible CSV content from a list of BioPart dicts.
+
+    Returns (components_csv, designs_csv) as strings.
+
+    Components CSV: id,role,sequence — maps encoded componentID to role + sequence.
+    Designs CSV: design — one row per part (catalog mode, not assembled circuits).
+    """
+    # Build components CSV
+    comp_buf = io.StringIO()
+    comp_writer = csv.writer(comp_buf)
+    comp_writer.writerow(["id", "role", "sequence"])
+
+    encoded_ids = []
+    for p in parts:
+        enc_id = encode_component_id(
+            part_id=p["part_id"],
+            name=p.get("name", ""),
+            tags=p.get("tags", []),
+        )
+        role = biopart_type_to_knox_role(p.get("type", "other"))
+        sequence = p.get("sequence", "")
+        comp_writer.writerow([enc_id, role, sequence])
+        encoded_ids.append(enc_id)
+
+    # Build designs CSV — each part as its own single-element design
+    design_buf = io.StringIO()
+    design_writer = csv.writer(design_buf)
+    design_writer.writerow(["design"])
+    for enc_id in encoded_ids:
+        design_writer.writerow([enc_id])
+
+    return comp_buf.getvalue(), design_buf.getvalue()
+
+
 if __name__ == "__main__":
     pass
