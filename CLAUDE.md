@@ -63,6 +63,18 @@ python scripts/run_pipeline.py --circuit data/processed/not_gate --mode TAGGED_F
 python scripts/run_ablation.py --dataset data/reference/mutalik_rbs.csv --output results/ablation
 ```
 
+### Syncing Parts: MCPGeneBank → Knox
+```bash
+# Dry run with demo data (no Qdrant or Knox needed)
+python scripts/sync_parts_to_knox.py --query "arsenic" "GFP" --demo-seed --dry-run
+
+# Upload to Knox (requires Knox running at localhost:8080)
+python scripts/sync_parts_to_knox.py --query "arsenic" "GFP" "tetracycline" --or-mode --demo-seed
+
+# With live Qdrant vector store (after running scrape_300.py)
+python scripts/sync_parts_to_knox.py --query "arsenic biosensor" --limit 50 --or-mode
+```
+
 ## Architecture
 
 ### How the three projects relate
