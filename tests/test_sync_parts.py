@@ -163,3 +163,35 @@ def test_fetch_parts_from_demo_seed():
         assert "part_id" in p
         assert "name" in p
         assert "type" in p
+
+
+def test_build_upload_payload():
+    """Test that the multipart payload is structured correctly for Knox."""
+    from sync_parts_to_knox import build_upload_payload
+
+    comp_csv = "id,role,sequence\nBBa_E0040__GFP,cds,ATGAGT\n"
+    design_csv = "design\nBBa_E0040__GFP\n"
+
+    files, data = build_upload_payload(
+        comp_csv=comp_csv,
+        design_csv=design_csv,
+        space_prefix="test_space",
+        group_id="test_group",
+    )
+
+    assert len(files) == 2
+    assert files[0][0] == "inputCSVFiles[]"
+    assert files[1][0] == "inputCSVFiles[]"
+    assert data["outputSpacePrefix"] == "test_space"
+    assert data["groupID"] == "test_group"
+
+
+def test_build_upload_payload_no_group():
+    from sync_parts_to_knox import build_upload_payload
+
+    comp_csv = "id,role,sequence\n"
+    design_csv = "design\n"
+
+    files, data = build_upload_payload(comp_csv, design_csv, "sp", None)
+
+    assert "groupID" not in data or data["groupID"] == "none"

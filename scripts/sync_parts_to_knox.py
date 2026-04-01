@@ -12,6 +12,8 @@ import io
 import sys
 from pathlib import Path
 
+import httpx
+
 # ---------------------------------------------------------------------------
 # Knox role mapping
 # ---------------------------------------------------------------------------
@@ -177,6 +179,69 @@ def fetch_parts(
                 results.append(hit)
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# Knox uploader
+# ---------------------------------------------------------------------------
+
+
+def build_upload_payload(
+    comp_csv: str,
+    design_csv: str,
+    space_prefix: str,
+    group_id: str | None,
+) -> tuple[list[tuple], dict]:
+    """
+    Build the multipart files list and form data dict for Knox CSV import.
+
+    Knox POST /import/csv expects:
+      - inputCSVFiles[]: multipart file uploads (components CSV + designs CSV)
+      - outputSpacePrefix: string
+      - groupID: string (optional, defaults to "none")
+      - weight: string (optional, defaults to "0.0")
+    """
+    files = [
+        ("inputCSVFiles[]", ("components.csv", comp_csv.encode(), "text/csv")),
+        ("inputCSVFiles[]", ("designs.csv", design_csv.encode(), "text/csv")),
+    ]
+    data = {
+        "outputSpacePrefix": space_prefix,
+        "groupID": group_id if group_id else "none",
+        "weight": "0.0",
+    }
+    return files, data
+
+
+def upload_to_knox(
+    comp_csv: str,
+    design_csv: str,
+    space_prefix: str,
+    knox_url: str = "http://localhost:8080",
+    group_id: str | None = None,
+    use_or: bool = False,
+) -> dict:
+    """
+    Upload CSV files to Knox via its REST API.
+    """
+    endpoint = "/or/csv" if use_or else "/import/csv"
+    url = f"{knox_url.rstrip('/')}{endpoint}"
+
+    files, data = build_upload_payload(comp_csv, design_csv, space_prefix, group_id)
+
+    try:
+        resp = httpx.post(url, files=files, data=data, timeout=30.0)
+        if resp.status_code in (200, 204):
+            return {"success": True, "status_code": resp.status_code,
+                    "message": f"Uploaded to Knox space '{space_prefix}'"}
+        return {"success": False, "status_code": resp.status_code,
+                "message": f"Knox returned {resp.status_code}: {resp.text}"}
+    except httpx.ConnectError:
+        return {"success": False, "status_code": 0,
+                "message": f"Cannot connect to Knox at {knox_url}. Is it running? Try: docker-compose up"}
+    except httpx.TimeoutException:
+        return {"success": False, "status_code": 0,
+                "message": f"Request to Knox timed out"}
 
 
 if __name__ == "__main__":
