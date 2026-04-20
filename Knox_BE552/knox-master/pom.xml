@@ -68,6 +68,13 @@
             <artifactId>spring-ai-starter-model-google-genai</artifactId>
         </dependency>
 
+        <!-- Spring AI MCP client (SSE transport via WebFlux) — lets Knox consume
+             remote MCP servers such as MCPGeneBank's mcp_server.py. -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
+        </dependency>
+
         <!-- Apache Commons Math -->
         <dependency>
             <groupId>org.apache.commons</groupId>

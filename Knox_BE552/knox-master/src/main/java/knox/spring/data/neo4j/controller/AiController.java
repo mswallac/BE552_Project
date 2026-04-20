@@ -1,20 +1,25 @@
 package knox.spring.data.neo4j.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.metadata.*;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 
 import knox.spring.data.neo4j.ai.GroupTools;
 import knox.spring.data.neo4j.ai.DesignTools;
 import knox.spring.data.neo4j.ai.OperatorTools;
 import knox.spring.data.neo4j.ai.GoldbarTools;
 import knox.spring.data.neo4j.ai.PartsSearchTools;
+import knox.spring.data.neo4j.ai.CircuitImportTools;
 
 import knox.spring.data.neo4j.services.DesignSpaceService;
 
@@ -61,6 +66,11 @@ public class AiController {
     private final ChatModel chatModel;
     private final DesignSpaceService designSpaceService;
 
+    // Remote MCP tools (e.g. MCPGeneBank). Optional — when no MCP server is reachable
+    // this list is empty and Knox still functions with just its local tools.
+    @Autowired(required = false)
+    private List<ToolCallbackProvider> mcpToolProviders = List.of();
+
     public AiController(ChatClient.Builder chatClientBuilder, ChatModel chatModel, DesignSpaceService designSpaceService) {
         this.chatModel = chatModel;
         this.designSpaceService = designSpaceService;
@@ -79,13 +89,27 @@ public class AiController {
 
         ChatClient chatClient = ChatClient.create(chatModel);
 
+        ToolCallback[] remoteMcpTools;
+        try {
+            remoteMcpTools = mcpToolProviders.stream()
+                .flatMap(p -> java.util.Arrays.stream(p.getToolCallbacks()))
+                .toArray(ToolCallback[]::new);
+            System.out.println("Remote MCP tools available: " + remoteMcpTools.length);
+        } catch (Exception e) {
+            // MCP server unreachable (e.g. MCPGeneBank not running) — fall back to local tools only.
+            System.out.println("MCP tool discovery failed: " + e.getMessage() + " — continuing with local tools only.");
+            remoteMcpTools = new ToolCallback[0];
+        }
+
         ChatResponse response = chatClient
             .prompt(prompt)
             .tools(new GroupTools(designSpaceService),
                    new DesignTools(designSpaceService),
                    new OperatorTools(designSpaceService),
                    new GoldbarTools(designSpaceService),
-                   new PartsSearchTools())
+                   new PartsSearchTools(),
+                   new CircuitImportTools(designSpaceService))
+            .toolCallbacks(remoteMcpTools)
             .call().chatResponse();
 
         String output = response.getResult().getOutput().getText();
