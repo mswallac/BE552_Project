@@ -115,11 +115,22 @@ public class PartsSearchTools {
     }
 
     private static boolean matches(PartEntry p, String kw) {
-        return contains(p.name(), kw)
-            || contains(p.function(), kw)
-            || contains(p.description(), kw)
-            || contains(p.organism(), kw)
-            || (p.tags() != null && p.tags().stream().anyMatch(t -> contains(t, kw)));
+        // Tokenize on whitespace; match if ANY token appears somewhere in the part's
+        // searchable fields. Handles multi-word queries like "arsenic sensing promoters"
+        // even though that exact phrase never appears as a substring in any field.
+        String[] tokens = kw.split("\\s+");
+        for (String token : tokens) {
+            if (token.isEmpty()) continue;
+            if (contains(p.name(), token)
+                || contains(p.function(), token)
+                || contains(p.description(), token)
+                || contains(p.organism(), token)
+                || contains(p.type(), token)
+                || (p.tags() != null && p.tags().stream().anyMatch(t -> contains(t, token)))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean contains(String s, String kw) {
