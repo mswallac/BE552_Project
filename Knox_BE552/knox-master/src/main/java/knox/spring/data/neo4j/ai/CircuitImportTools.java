@@ -77,6 +77,7 @@ public class CircuitImportTools {
 
         List<String> tuExpressions = new ArrayList<>();
         JSONObject categories = new JSONObject();
+        List<String[]> partLabels = new ArrayList<>();
 
         for (JsonNode tu : tus) {
             JsonNode parts = tu.path("parts");
@@ -95,6 +96,7 @@ public class CircuitImportTools {
 
                 // Register this atom in categories: role -> [componentID]
                 String role = mapTypeToRole(partType);
+                partLabels.add(new String[]{partId, role});
                 if (!categories.has(atom)) {
                     categories.put(atom, new JSONObject());
                 }
@@ -131,10 +133,107 @@ public class CircuitImportTools {
                 + "<br>Categories keys: " + categories.keySet();
         }
 
+        StringBuilder partList = new StringBuilder();
+        for (String[] pl : partLabels) {
+            partList.append("&nbsp;&nbsp;").append(pl[0]).append(" <i>(").append(pl[1]).append(")</i><br>");
+        }
+
         return "Imported design space <b>" + safeSpaceId + "</b><br>"
             + "GOLDBAR: <code>" + goldbar + "</code><br>"
-            + "Parts: " + categories.keySet().size() + " atoms, "
-            + tuExpressions.size() + " transcription unit(s).<br>"
+            + tuExpressions.size() + " transcription unit(s), " + partLabels.size() + " part(s):<br>"
+            + partList
+            + "View the graph at <a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>.";
+    }
+
+    @Tool(description =
+        "Import a user-specified set of biological parts into Knox as a design space. Prefer this tool " +
+        "over importCircuitAsGoldbar when you want to CHOOSE the parts yourself — MCPGeneBank's " +
+        "build_from_template auto-selector sometimes picks composite/wrong-role parts. Recommended flow: " +
+        "(1) call MCPGeneBank search_parts once per slot with an explicit part_type filter (e.g. " +
+        "part_type=\"promoter\" for a sensor promoter, part_type=\"regulator\" for a TF, part_type=\"reporter\" " +
+        "for GFP/RFP). (2) pick one or more IDs from each search result. (3) lay them out in 5'→3' order " +
+        "as `id:role` pairs separated by commas; separate transcription units with `|`. " +
+        "Roles should be one of: promoter, ribosome_entry_site, CDS, terminator, ribozyme, engineered_region. " +
+        "Example for a mercury→RFP biosensor:\n" +
+        "  tusSpec = \"BBa_K346001:promoter,BBa_B0034:ribosome_entry_site,BBa_K346002:CDS,BBa_B0015:terminator|BBa_R0040:promoter,BBa_B0034:ribosome_entry_site,BBa_E1010:CDS,BBa_B0015:terminator\"\n" +
+        "Returns the new design space ID and a labelled parts list. View at http://localhost:8080.",
+        returnDirect = true)
+    String importPartsAsGoldbar(
+            @ToolParam(description = "`|`-separated transcription units; each TU is a comma-separated list of `partId:role` pairs in 5'→3' order. See tool description for example.") String tusSpec,
+            @ToolParam(description = "Name for the new Knox design space (e.g. 'mercury_biosensor_v2'). Alphanumeric + underscore/hyphen.") String spaceName) {
+
+        System.out.println("\nAI: importPartsAsGoldbar spaceName='" + spaceName + "' tusSpec='" + tusSpec + "'");
+
+        if (tusSpec == null || tusSpec.isBlank()) {
+            return "Error: tusSpec is empty. Pass at least one TU like 'BBa_xxx:promoter,BBa_yyy:CDS'.";
+        }
+        if (spaceName == null || spaceName.isBlank()) {
+            return "Error: spaceName is required.";
+        }
+
+        List<String> tuExpressions = new ArrayList<>();
+        JSONObject categories = new JSONObject();
+        List<String[]> partLabels = new ArrayList<>(); // [id, role] for the response message
+
+        for (String tuChunk : tusSpec.split("\\|")) {
+            tuChunk = tuChunk.trim();
+            if (tuChunk.isEmpty()) continue;
+            List<String> tuAtoms = new ArrayList<>();
+            for (String token : tuChunk.split(",")) {
+                token = token.trim();
+                if (token.isEmpty()) continue;
+                String partId;
+                String role;
+                int colon = token.indexOf(':');
+                if (colon > 0) {
+                    partId = token.substring(0, colon).trim();
+                    role = mapTypeToRole(token.substring(colon + 1).trim());
+                } else {
+                    partId = token;
+                    role = "engineered_region";
+                }
+                if (partId.isEmpty()) continue;
+
+                String atom = safeAtom(partId);
+                tuAtoms.add(atom);
+                partLabels.add(new String[]{partId, role});
+
+                if (!categories.has(atom)) categories.put(atom, new JSONObject());
+                JSONObject atomEntry = categories.getJSONObject(atom);
+                if (!atomEntry.has(role)) atomEntry.put(role, new JSONArray());
+                JSONArray ids = atomEntry.getJSONArray(role);
+                if (!containsString(ids, partId)) ids.put(partId);
+            }
+            if (!tuAtoms.isEmpty()) tuExpressions.add(String.join(" . ", tuAtoms));
+        }
+
+        if (tuExpressions.isEmpty()) {
+            return "Error: no usable parts parsed from tusSpec='" + tusSpec + "'.";
+        }
+
+        String goldbar = tuExpressions.size() == 1
+            ? tuExpressions.get(0)
+            : "(" + String.join(") . (", tuExpressions) + ")";
+
+        String safeSpaceId = safeAtom(spaceName);
+        try {
+            designSpaceService.importGoldbar(goldbar, categories, safeSpaceId,
+                "", 1.0, false);
+        } catch (Exception e) {
+            return "Error importing GOLDBAR into Knox: " + e.getMessage()
+                + "<br>GOLDBAR was: " + goldbar
+                + "<br>Categories keys: " + categories.keySet();
+        }
+
+        StringBuilder partList = new StringBuilder();
+        for (String[] pl : partLabels) {
+            partList.append("&nbsp;&nbsp;").append(pl[0]).append(" <i>(").append(pl[1]).append(")</i><br>");
+        }
+
+        return "Imported design space <b>" + safeSpaceId + "</b><br>"
+            + "GOLDBAR: <code>" + goldbar + "</code><br>"
+            + tuExpressions.size() + " transcription unit(s), " + partLabels.size() + " part(s):<br>"
+            + partList
             + "View the graph at <a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>.";
     }
 
