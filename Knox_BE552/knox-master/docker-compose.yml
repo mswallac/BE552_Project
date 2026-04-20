@@ -35,7 +35,7 @@ services:
 
       # MCP client — point Knox at the host's MCPGeneBank SSE server.
       # MCPGeneBank is run manually on the host (see CLAUDE.md).
-      MCPGENEBANK_URL: ${MCPGENEBANK_URL:-http://host.docker.internal:8080}
+      MCPGENEBANK_URL: ${MCPGENEBANK_URL:-http://host.docker.internal:8000}
 
     # Make host.docker.internal resolvable on Linux/WSL (Docker Desktop handles it natively).
     extra_hosts:

@@ -103,5 +103,26 @@ def _find_parts_noncomposite(node, organism: str = "", limit: int = 5):
 
 _cb.find_parts_for_node = _find_parts_noncomposite
 
+# Also filter composites out of the direct search_parts() path so the MCP
+# `search_parts` tool (which Gemini calls when it wants candidates for a
+# specific slot) returns clean atomic parts too. Oversample, filter, trim.
+import tools.search_parts as _sp  # noqa: E402
+
+_orig_search = _sp.search_parts
+
+def _search_parts_noncomposite(query, limit: int = 5, part_type=None, **kwargs):
+    hits = _orig_search(query, limit=max(limit * 3, 15), part_type=part_type, **kwargs)
+    atomic = [p for p in hits if not _looks_composite(p)]
+    chosen = atomic if atomic else hits
+    return chosen[:limit]
+
+_sp.search_parts = _search_parts_noncomposite
+
+# mcp_server.py bound `search_parts` at import time
+# (`from tools.search_parts import search_parts`), so the MCP tool wrapper
+# still points at the original. Rebind the local name.
+import mcp_server as _mcps  # noqa: E402
+_mcps.search_parts = _search_parts_noncomposite
+
 if __name__ == "__main__":
     mcp.run(transport="sse")

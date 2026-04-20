@@ -18,7 +18,6 @@ import knox.spring.data.neo4j.ai.GroupTools;
 import knox.spring.data.neo4j.ai.DesignTools;
 import knox.spring.data.neo4j.ai.OperatorTools;
 import knox.spring.data.neo4j.ai.GoldbarTools;
-import knox.spring.data.neo4j.ai.PartsSearchTools;
 import knox.spring.data.neo4j.ai.CircuitImportTools;
 
 import knox.spring.data.neo4j.services.DesignSpaceService;
@@ -107,7 +106,6 @@ public class AiController {
                    new DesignTools(designSpaceService),
                    new OperatorTools(designSpaceService),
                    new GoldbarTools(designSpaceService),
-                   new PartsSearchTools(),
                    new CircuitImportTools(designSpaceService))
             .toolCallbacks(remoteMcpTools)
             .call().chatResponse();
