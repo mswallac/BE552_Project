@@ -33,6 +33,14 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-disabled}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-disabled}
 
+      # MCP client — point Knox at the host's MCPGeneBank SSE server.
+      # MCPGeneBank is run manually on the host (see CLAUDE.md).
+      MCPGENEBANK_URL: ${MCPGENEBANK_URL:-http://host.docker.internal:8080}
+
+    # Make host.docker.internal resolvable on Linux/WSL (Docker Desktop handles it natively).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     ports:
       - "127.0.0.1:8080:8080"   # Localhost only
     networks:
