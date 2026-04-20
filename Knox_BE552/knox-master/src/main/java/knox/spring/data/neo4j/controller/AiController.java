@@ -94,9 +94,9 @@ public class AiController {
         }
 
         Usage usage = response.getMetadata().getUsage();
-        int promptTokens = usage.getPromptTokens();
-        int completionTokens = usage.getCompletionTokens();
-        int totalTokens = usage.getTotalTokens();
+        int promptTokens = usage == null ? 0 : usage.getPromptTokens();
+        int completionTokens = usage == null ? 0 : usage.getCompletionTokens();
+        int totalTokens = usage == null ? 0 : usage.getTotalTokens();
 
         System.out.printf("\nProvider: %s | Model: %s%n", activeProvider, activeModel());
         System.out.printf("Tokens:\nPrompt: %d, Completion: %d, Total: %d%n", promptTokens, completionTokens, totalTokens);
@@ -119,7 +119,8 @@ public class AiController {
     }
 
     private String checkActiveProviderKey() {
-        return switch (activeProvider) {
+        String provider = activeProvider == null ? "" : activeProvider;
+        return switch (provider) {
             case "openai" -> isDisabled(openAiApiKey)
                 ? "Error: Please set 'OPENAI_API_KEY' in environment variables to use AI Chat Features."
                 : null;
@@ -129,13 +130,14 @@ public class AiController {
             case "google-genai" -> isDisabled(geminiApiKey)
                 ? "Error: Please set 'GEMINI_API_KEY' in environment variables to use AI Chat Features."
                 : null;
-            default -> "Error: Unsupported spring.ai.model.chat='" + activeProvider
+            default -> "Error: Unsupported spring.ai.model.chat='" + provider
                 + "'. Expected one of: openai, anthropic, google-genai.";
         };
     }
 
     private String activeModel() {
-        return switch (activeProvider) {
+        String provider = activeProvider == null ? "" : activeProvider;
+        return switch (provider) {
             case "openai" -> openAiModel;
             case "anthropic" -> anthropicModel;
             case "google-genai" -> geminiModel;
