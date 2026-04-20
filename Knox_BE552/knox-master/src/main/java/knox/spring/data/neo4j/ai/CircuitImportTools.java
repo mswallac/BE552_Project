@@ -42,15 +42,19 @@ public class CircuitImportTools {
     @Tool(description =
         "Convert a CircuitDesign JSON (from MCPGeneBank's build_from_template or design_circuit tools) " +
         "into a GOLDBAR expression + categories JSON and import it into Knox as a new design space. " +
-        "Pass the FULL JSON string returned by those tools as circuitJson. Returns the new design space " +
-        "ID, which becomes visible in Knox's graph view at http://localhost:8080. Use this tool after " +
-        "calling a MCPGeneBank circuit-building tool to make the assembled circuit viewable as a graph.",
+        "IMPORTANT: pass the FULL UNMODIFIED JSON string returned by the MCPGeneBank tool — it must contain " +
+        "a top-level `transcription_units` array. Do not summarize, truncate, or reshape it. Returns the " +
+        "new design space ID, which becomes visible in Knox's graph view at http://localhost:8080. Use " +
+        "this tool after calling a MCPGeneBank circuit-building tool to make the assembled circuit " +
+        "viewable as a graph.",
         returnDirect = true)
     String importCircuitAsGoldbar(
-            @ToolParam(description = "Full CircuitDesign JSON string from MCPGeneBank") String circuitJson,
+            @ToolParam(description = "Full unmodified CircuitDesign JSON string from MCPGeneBank — must contain top-level `transcription_units` array") String circuitJson,
             @ToolParam(description = "Name for the new Knox design space (e.g. 'arsenic_biosensor_v1'). Must match [A-Za-z0-9_-]+.") String spaceName) {
 
         System.out.println("\nAI: importCircuitAsGoldbar spaceName='" + spaceName + "'");
+        System.out.println("circuitJson (first 400 chars): "
+            + (circuitJson == null ? "null" : circuitJson.substring(0, Math.min(400, circuitJson.length()))));
 
         if (circuitJson == null || circuitJson.isBlank()) {
             return "Error: circuitJson is empty. Call a MCPGeneBank circuit-building tool first, then pass its full JSON output here.";
