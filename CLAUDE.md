@@ -31,9 +31,10 @@ For the end-to-end "design me a biosensor" flow, MCPGeneBank's MCP server must b
 running on the **host** (not containerized — easier to iterate). Knox's container
 reaches it via `host.docker.internal:8080`.
 ```bash
-# Terminal 1 — MCPGeneBank MCP server on host
-cd MCPGeneBank/bio-circuit-ai
-python mcp_server.py --sse   # listens on :8080 (/sse)
+# Terminal 1 — MCPGeneBank MCP server on host (FastMCP defaults to :8000)
+cd /c/Users/black/Documents/BE552_Project
+/c/Users/black/anaconda3/python.exe scripts/run_mcpgenebank_mcp.py
+# listens on http://127.0.0.1:8000/sse
 
 # Terminal 2 — Knox + Neo4j via docker
 cd Knox_BE552/knox-master
@@ -45,8 +46,9 @@ GEMINI_API_KEY=... docker-compose up --build
 # and create a GOLDBAR-backed design space viewable at localhost:8080.
 ```
 Override `MCPGENEBANK_URL` if the MCP server is elsewhere (it defaults to
-`http://host.docker.internal:8080`). Knox also works without MCPGeneBank running —
-the local `PartsSearchTools` sidecar handles offline parts queries.
+`http://host.docker.internal:8000`). Knox requires MCPGeneBank to be running for
+parts queries — there is no offline sidecar fallback; the ~7k-part Qdrant store
+in MCPGeneBank is the sole source of truth.
 
 ### MCPGeneBank (Python 3.11+ / FastAPI)
 ```bash
@@ -64,7 +66,7 @@ uvicorn api.main:app --reload             # API at http://localhost:8000
 
 # MCP server (for Claude Desktop / Cursor integration)
 python mcp_server.py          # stdio transport
-python mcp_server.py --sse    # SSE transport on port 8080
+python mcp_server.py --sse    # SSE transport on port 8000 (FastMCP default)
 
 # Ingestion must be run before MCP server (or use scrape_300.py for quick seed)
 ```

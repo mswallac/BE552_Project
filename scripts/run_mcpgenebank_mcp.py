@@ -84,11 +84,20 @@ import circuits.circuit_builder as _cb  # noqa: E402
 
 _COMPOSITE_KEYWORDS = ("reporter device", " device", "construct", "system", "biosensor")
 
+def _field(p, name: str) -> str:
+    """Safely get a field from a BioPart object OR a dict (store.search() returns dicts)."""
+    if isinstance(p, dict):
+        v = p.get(name)
+    else:
+        v = getattr(p, name, None)
+    return (v or "") if v else ""
+
 def _looks_composite(p) -> bool:
     blob = " ".join(filter(None, [
-        (getattr(p, "name", "") or "").lower(),
-        (getattr(p, "description", "") or "").lower(),
-        (getattr(p, "function", "") or "").lower(),
+        _field(p, "name").lower(),
+        _field(p, "description").lower(),
+        _field(p, "function").lower(),
+        _field(p, "title").lower(),
     ]))
     return any(kw in blob for kw in _COMPOSITE_KEYWORDS)
 
@@ -102,6 +111,29 @@ def _find_parts_noncomposite(node, organism: str = "", limit: int = 5):
     return chosen[:limit]
 
 _cb.find_parts_for_node = _find_parts_noncomposite
+
+# Also filter composites out of the MCP `search_parts` tool path.
+# That tool (in mcp_server.py) calls `_get_store().search(...)` directly on
+# the vector-store singleton — it does NOT go through tools.search_parts.
+# Patching the module-level name is a no-op; we have to wrap the store's
+# bound `search` method on the actual singleton instance. Instantiate the
+# store now (forces construction) and replace its .search.
+import mcp_server as _mcps  # noqa: E402
+
+_store = _mcps._get_store()
+_orig_store_search = _store.search
+
+def _store_search_noncomposite(query, limit: int = 10, part_type=None, **kwargs):
+    hits = _orig_store_search(
+        query=query,
+        limit=max(limit * 3, 15),
+        part_type=part_type,
+        **kwargs,
+    )
+    atomic = [p for p in hits if not _looks_composite(p)]
+    return (atomic if atomic else hits)[:limit]
+
+_store.search = _store_search_noncomposite
 
 if __name__ == "__main__":
     mcp.run(transport="sse")
