@@ -39,7 +39,7 @@ User Prompt
 
 | Directory | Owner | Description |
 |-----------|-------|-------------|
-| [`Knox_BE552/`](Knox_BE552/) | Charles (Mike assists) | Knox genetic design space repository + GOLDBAR combinatorial framework. Java 17 / Spring Boot / Neo4j. |
+| [`Knox_BE552/`](Knox_BE552/) | Mike | Knox genetic design space repository + GOLDBAR combinatorial framework. Java 17 / Spring Boot / Neo4j. |
 | [`MCPGeneBank/`](MCPGeneBank/) | Charles | Bio-Circuit AI: NL-to-circuit pipeline with 1,200+ parts from iGEM, GenBank, UniProt, Addgene. Python / FastAPI / Qdrant. Exposes tools via MCP server. |
 | [`generative-syn-bio/`](generative-syn-bio/) | Josh | Evo 2 integration for de novo part generation and log-probability scoring. Cello UCF parsing, multi-objective scoring, circuit validation. Python / PyTorch. |
 
