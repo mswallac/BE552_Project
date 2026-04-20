@@ -156,19 +156,37 @@ public class CircuitImportTools {
         "choose parts yourself. Recommended flow: " +
         "(1) for each slot, call MCPGeneBank search_parts once with an explicit part_type filter (e.g. " +
         "part_type=\"promoter\", part_type=\"regulator\", part_type=\"reporter\"); pick the top 2-3 legit " +
-        "candidates. (2) lay them out in 5'→3' order as `id1+id2+...:role` tokens separated by commas; " +
-        "separate transcription units with `|`. Use `+` within a slot to add alternatives — a slot with " +
-        "N alternatives contributes a factor of N to the design count. Give each functional slot (promoter, " +
-        "reporter CDS, regulator CDS) at least 2 alternatives when possible so the design space has >1 " +
-        "enumerable design. Roles: promoter, ribosome_entry_site, CDS, terminator, ribozyme, engineered_region.\n" +
-        "Example — arsenic→GFP biosensor, 3 constitutive promoter choices × 2 GFP reporter choices:\n" +
-        "  tusSpec = \"BBa_J23100+BBa_J23101+BBa_R0040:promoter,BBa_B0034:ribosome_entry_site,BBa_K1031311:CDS,BBa_B0015:terminator|BBa_K1031907:promoter,BBa_B0034:ribosome_entry_site,BBa_E0040+BBa_K4930007:CDS,BBa_B0015:terminator\"\n" +
-        "  → 3×1×1×1 × 1×1×2×1 = 6 enumerable designs.\n" +
-        "Returns the design space ID, GOLDBAR, labelled slot breakdown, and design-count estimate. View at http://localhost:8080.",
+        "candidates. (2) lay them out in 5'→3' order as `id1+id2+...:role[:label]` slot tokens separated by " +
+        "commas; separate transcription units with `|`. Use `+` within a slot to add alternatives (a slot " +
+        "with N alternatives contributes a factor of N to the design count). Give each functional slot " +
+        "(promoter, reporter CDS, regulator CDS) ≥2 alternatives when possible so the space has >1 design.\n" +
+        "\n" +
+        "OPTIONAL third colon field: a short human-readable LABEL identifying the slot's biological " +
+        "purpose (e.g. `constitutive_promoter`, `arsenic_sensor`, `ArsR_regulator`, `GFP_reporter`). " +
+        "This label appears in the response so the user can tell at a glance what each slot does. " +
+        "ALWAYS PROVIDE LABELS for non-obvious slots (sensor vs constitutive promoter, regulator vs " +
+        "reporter CDS).\n" +
+        "\n" +
+        "Roles: promoter, ribosome_entry_site, CDS, terminator, ribozyme, engineered_region.\n" +
+        "\n" +
+        "Example — arsenic→GFP biosensor, 3 constitutive promoters × 2 GFP reporters (use BBa_K4767001 " +
+        "Pars for the arsenic-responsive promoter, NOT the legacy BBa_K1031907 which is defunct):\n" +
+        "  tusSpec = \"BBa_J23100+BBa_J23101+BBa_R0040:promoter:constitutive,BBa_B0034:ribosome_entry_site,BBa_K1031311:CDS:ArsR_regulator,BBa_B0015:terminator|BBa_K4767001:promoter:arsenic_sensor,BBa_B0034:ribosome_entry_site,BBa_E0040+BBa_K4930007:CDS:GFP_reporter,BBa_B0015:terminator\"\n" +
+        "  → 3×2 = 6 enumerable designs.\n" +
+        "\n" +
+        "Also pass a `legend` string: a 1-3 line plain-English summary of the design (mechanism, what each " +
+        "TU does, role of each picked part). This appears verbatim in the response so the user sees a " +
+        "biology explanation alongside the part IDs. Example legend: \"Classic arsenic biosensor. TU1 " +
+        "constitutively expresses ArsR (Anderson promoters → BBa_K1031311 ArsR CDS). TU2 is the sensing " +
+        "output (BBa_K4767001 Pars arsenic-responsive promoter → GFP variants BBa_E0040/BBa_K4930007). " +
+        "ArsR represses Pars; arsenic binds ArsR → release → GFP expression.\"\n" +
+        "\n" +
+        "Returns the design space ID, GOLDBAR, legend, labelled slot breakdown, design count, and UI link.",
         returnDirect = true)
     String importPartsAsGoldbar(
-            @ToolParam(description = "`|`-separated transcription units; each TU is a comma-separated list of `id1[+id2+id3]:role` slot tokens in 5'→3' order. Use `+` to add alternatives within a slot. See tool description for full example.") String tusSpec,
-            @ToolParam(description = "Name for the new Knox design space (e.g. 'mercury_biosensor_v2'). Alphanumeric + underscore/hyphen.") String spaceName) {
+            @ToolParam(description = "`|`-separated transcription units; each TU is a comma-separated list of `id1[+id2+id3]:role[:label]` slot tokens in 5'→3' order. Use `+` for alternatives, optional 3rd colon field for a human label. See tool description for full example.") String tusSpec,
+            @ToolParam(description = "Name for the new Knox design space (e.g. 'mercury_biosensor_v2'). Alphanumeric + underscore/hyphen.") String spaceName,
+            @ToolParam(description = "Plain-English 1-3 line summary of the circuit mechanism and per-TU purpose. Appears verbatim in the response. Use to explain biology to the user. Pass empty string if no explanation is needed.") String legend) {
 
         System.out.println("\nAI: importPartsAsGoldbar spaceName='" + spaceName + "' tusSpec='" + tusSpec + "'");
 
@@ -181,7 +199,8 @@ public class CircuitImportTools {
 
         List<String> tuExpressions = new ArrayList<>();
         JSONObject categories = new JSONObject();
-        List<String[]> slotLabels = new ArrayList<>(); // [role, "id1, id2, id3"] per slot
+        // Each slot: {role, label, "id1, id2, id3"}
+        List<String[]> slotLabels = new ArrayList<>();
         long designCount = 1;
 
         int tuIdx = 0;
@@ -193,15 +212,23 @@ public class CircuitImportTools {
             for (String token : tuChunk.split(",")) {
                 token = token.trim();
                 if (token.isEmpty()) continue;
+
+                // Split on ':' into [parts, role, optional label]. Use split(":", -1)
+                // variant keeps trailing empty strings but we don't want that; manual parse:
                 String partsPart;
                 String role;
-                int colon = token.lastIndexOf(':');
-                if (colon > 0) {
-                    partsPart = token.substring(0, colon).trim();
-                    role = mapTypeToRole(token.substring(colon + 1).trim());
-                } else {
-                    partsPart = token;
+                String label = "";
+                String[] segs = token.split(":", 3);
+                if (segs.length == 1) {
+                    partsPart = segs[0].trim();
                     role = "engineered_region";
+                } else if (segs.length == 2) {
+                    partsPart = segs[0].trim();
+                    role = mapTypeToRole(segs[1].trim());
+                } else {
+                    partsPart = segs[0].trim();
+                    role = mapTypeToRole(segs[1].trim());
+                    label = segs[2].trim();
                 }
                 if (partsPart.isEmpty()) continue;
 
@@ -215,7 +242,7 @@ public class CircuitImportTools {
 
                 String slotAtom = "s" + tuIdx + "_" + slotIdx + "_" + role;
                 tuAtoms.add(slotAtom);
-                slotLabels.add(new String[]{role, String.join(", ", altIds)});
+                slotLabels.add(new String[]{role, label, String.join(", ", altIds)});
                 designCount *= altIds.size();
 
                 JSONObject atomEntry = new JSONObject();
@@ -252,11 +279,23 @@ public class CircuitImportTools {
 
         StringBuilder slotList = new StringBuilder();
         for (String[] sl : slotLabels) {
-            slotList.append("&nbsp;&nbsp;<i>(").append(sl[0]).append(")</i> ").append(sl[1]).append("<br>");
+            String role = sl[0];
+            String label = sl[1];
+            String ids = sl[2];
+            slotList.append("&nbsp;&nbsp;<i>(").append(role).append(")</i>");
+            if (label != null && !label.isEmpty()) {
+                slotList.append(" <b>").append(label).append("</b>");
+            }
+            slotList.append(" — ").append(ids).append("<br>");
         }
 
+        String legendBlock = (legend != null && !legend.isBlank())
+            ? "<br><i>" + legend.replace("\n", "<br>") + "</i><br>"
+            : "<br>";
+
         return "Imported design space <b>" + safeSpaceId + "</b><br>"
-            + "GOLDBAR: <code>" + goldbar + "</code><br>"
+            + "GOLDBAR: <code>" + goldbar + "</code>"
+            + legendBlock
             + tuExpressions.size() + " transcription unit(s), " + slotLabels.size() + " slot(s), "
             + "<b>" + designCount + " enumerable design(s)</b>:<br>"
             + slotList
