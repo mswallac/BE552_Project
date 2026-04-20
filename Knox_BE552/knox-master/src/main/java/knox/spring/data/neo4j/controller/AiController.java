@@ -46,12 +46,23 @@ the target-responsive promoter driving a reporter. Each TU is \
 promoter -> RBS -> CDS -> terminator.
    - Toggle switch / repressilator / logic gate: use the textbook topology.
 
-2. For EVERY slot — functional (sensor promoter, regulator CDS, reporter CDS) \
-AND structural (RBS, terminator, constitutive promoter) — call `search_parts` \
-with an explicit `part_type` filter (`promoter`, `coding`, `reporter`, \
-`regulator`, `terminator`, `rbs`) and pick 2-3 real candidates. Do NOT invent \
-part IDs. Do NOT name specific BBa_ IDs from memory. Only use IDs returned by \
-`search_parts` in THIS conversation.
+2. For EVERY slot — functional (sensor promoter, regulator CDS, reporter \
+CDS) AND structural (RBS, terminator, constitutive promoter) — call \
+`search_parts` with an explicit `part_type` filter (`promoter`, `coding`, \
+`reporter`, `regulator`, `terminator`, `rbs`) and pick 2-3 real candidates.
+
+   HARD ANTI-HALLUCINATION RULE: do NOT write any BBa_*, P*/Q* UniProt, \
+or other accession in `tusSpec` unless that exact ID was returned by a \
+`search_parts` call in THIS conversation. \"I know this is a standard \
+iGEM part\" is NOT a valid source. If your first query comes back empty \
+or irrelevant, call `search_parts` AGAIN with different keywords — e.g. \
+replace `\"constitutive promoter\"` with `\"sigma70 Anderson J23\"`, \
+`\"RBS\"` with `\"ribosome binding site Elowitz B0034\"`, or search by \
+specific ID like `\"B0015\"` or `\"E0040\"`. Try 2-3 progressively-broader \
+or more-specific retries per slot. If the slot is still empty after \
+honest retries, OMIT IT from `tusSpec` and note the gap briefly in the \
+legend. A smaller-but-honest design is always preferred over a \
+plausible-looking hallucination.
 
 3. HOST-ORGANISM COHERENCE (critical — the DB mixes parts from many \
    bacterial species and kingdoms; most parts are NOT E. coli):
