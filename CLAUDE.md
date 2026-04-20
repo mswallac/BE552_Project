@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BE552 course project workspace containing three integrated sub-projects for AI-driven synthetic biology circuit design:
 
-1. **Knox** (`Knox_BE552/knox-master/`) — Java/Spring Boot genetic design space repository backed by Neo4j graph database. Provides GOLDBAR combinatorial design framework, SBOL import/export, and AI chat integration via Spring AI (OpenAI + Anthropic).
+1. **Knox** (`Knox_BE552/knox-master/`) — Java/Spring Boot genetic design space repository backed by Neo4j graph database. Provides GOLDBAR combinatorial design framework, SBOL import/export, and AI chat integration via Spring AI (OpenAI + Anthropic + Google Gemini).
 2. **MCPGeneBank** (`MCPGeneBank/bio-circuit-ai/`) — Python natural-language-to-genetic-circuit pipeline. Takes plain English ("detect arsenic and glow green") and assembles real circuits from 1,200+ biological parts using semantic vector search (Qdrant) and LLM orchestration (GPT-4o). Also exposes tools via MCP server.
 3. **generative-syn-bio** (`generative-syn-bio/`) — Python pipeline connecting Cello circuit design outputs to the Evo 2 DNA language model for context-aware sequence generation. Compares conditioning modes (no context / upstream only / full context / tagged full) as an ablation study.
 
@@ -105,7 +105,7 @@ parse_ucf() → Evo2Generator.generate() → MultiObjectiveScorer.rank() → Cir
 - `pythonpath = ["."]` in pyproject.toml is required for pytest to resolve `src.*` imports
 
 ### Knox architecture
-- Spring Boot 3.5 + Spring Data Neo4j 7 + Spring AI (OpenAI + Anthropic)
+- Spring Boot 3.5 + Spring Data Neo4j 7 + Spring AI 1.1.1 (OpenAI + Anthropic + Google Gemini)
 - Domain model: DesignSpace → Node → Edge → Component, with Branch/Commit/Snapshot for versioning
 - GOLDBAR parser (`goldbar/`) converts combinatorial specs into design space graphs
 - AI tools (`ai/`) expose design, GOLDBAR, group, and operator operations as Spring AI function calls
@@ -117,6 +117,7 @@ parse_ucf() → Evo2Generator.generate() → MultiObjectiveScorer.rank() → Cir
 |----------|---------|---------|
 | `OPENAI_API_KEY` | Knox, MCPGeneBank | OpenAI API for LLM features |
 | `CLAUDE_API_KEY` | Knox | Anthropic API for AI chat |
+| `GEMINI_API_KEY` | Knox | Google AI Studio key for Gemini chat (default provider) |
 | `HF_TOKEN` | generative-syn-bio | Hugging Face token for Evo 2 model download |
 | `EVO2_MODEL` | generative-syn-bio | Model ID override (default: evo2_1b_base) |
 | `QDRANT_URL` | MCPGeneBank | Qdrant server (default: http://localhost:6333) |
