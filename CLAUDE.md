@@ -26,6 +26,28 @@ mvn spring-boot:run
 # Requires local Neo4j instance (user: neo4j, password: kn0xkn0x)
 ```
 
+### Full demo stack (Knox + MCPGeneBank MCP bridge)
+For the end-to-end "design me a biosensor" flow, MCPGeneBank's MCP server must be
+running on the **host** (not containerized — easier to iterate). Knox's container
+reaches it via `host.docker.internal:8080`.
+```bash
+# Terminal 1 — MCPGeneBank MCP server on host
+cd MCPGeneBank/bio-circuit-ai
+python mcp_server.py --sse   # listens on :8080 (/sse)
+
+# Terminal 2 — Knox + Neo4j via docker
+cd Knox_BE552/knox-master
+GEMINI_API_KEY=... docker-compose up --build
+
+# Then ask Knox's /agent endpoint something like
+#   "design me an arsenic biosensor that produces GFP"
+# Gemini will call MCPGeneBank tools (remote MCP) + Knox CircuitImportTools
+# and create a GOLDBAR-backed design space viewable at localhost:8080.
+```
+Override `MCPGENEBANK_URL` if the MCP server is elsewhere (it defaults to
+`http://host.docker.internal:8080`). Knox also works without MCPGeneBank running —
+the local `PartsSearchTools` sidecar handles offline parts queries.
+
 ### MCPGeneBank (Python 3.11+ / FastAPI)
 ```bash
 cd MCPGeneBank/bio-circuit-ai
