@@ -14,6 +14,7 @@ import knox.spring.data.neo4j.ai.GroupTools;
 import knox.spring.data.neo4j.ai.DesignTools;
 import knox.spring.data.neo4j.ai.OperatorTools;
 import knox.spring.data.neo4j.ai.GoldbarTools;
+import knox.spring.data.neo4j.ai.PartsSearchTools;
 
 import knox.spring.data.neo4j.services.DesignSpaceService;
 
@@ -83,7 +84,8 @@ public class AiController {
             .tools(new GroupTools(designSpaceService),
                    new DesignTools(designSpaceService),
                    new OperatorTools(designSpaceService),
-                   new GoldbarTools(designSpaceService))
+                   new GoldbarTools(designSpaceService),
+                   new PartsSearchTools())
             .call().chatResponse();
 
         String output = response.getResult().getOutput().getText();
