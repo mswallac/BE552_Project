@@ -87,7 +87,11 @@ public class CircuitImportTools {
             for (JsonNode part : parts) {
                 String partId = textOrBlank(part, "part_id");
                 String partName = textOrBlank(part, "name");
-                String partType = textOrBlank(part, "type");
+                // MCPGeneBank's CircuitDesign JSON emits the SBOL-style role as
+                // "role" per part (e.g. "promoter", "cds", "terminator"); "type"
+                // is not in the summary. Fall back to "type" defensively.
+                String partType = textOrBlank(part, "role");
+                if (partType.isBlank()) partType = textOrBlank(part, "type");
                 if (partId.isBlank()) partId = partName;
                 if (partId.isBlank()) continue;
 

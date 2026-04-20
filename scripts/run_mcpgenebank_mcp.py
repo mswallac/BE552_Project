@@ -70,5 +70,38 @@ for tool in _tools_attr.values():
     if hasattr(tool, "parameters") and tool.parameters:
         _strip_null_defaults(tool.parameters)
 
+# Filter composite parts out of the auto-selector candidate pool.
+# MCPGeneBank's vector search over the ~7k parts DB ranks composite
+# "device" parts (e.g. "MerR-pMerT mercury sensing chromoprotein
+# reporter device") above bare promoters for queries like "mercury
+# responsive promoter". A composite that already contains a reporter,
+# placed in series with a separate reporter, gives a biologically
+# nonsense circuit. We wrap circuit_builder.find_parts_for_node to
+# drop obvious composites before _pick_best selects one, and fall back
+# to the unfiltered list if NO atomic candidate survived so assembly
+# never breaks on thin slots.
+import circuits.circuit_builder as _cb  # noqa: E402
+
+_COMPOSITE_KEYWORDS = ("reporter device", " device", "construct", "system", "biosensor")
+
+def _looks_composite(p) -> bool:
+    blob = " ".join(filter(None, [
+        (getattr(p, "name", "") or "").lower(),
+        (getattr(p, "description", "") or "").lower(),
+        (getattr(p, "function", "") or "").lower(),
+    ]))
+    return any(kw in blob for kw in _COMPOSITE_KEYWORDS)
+
+_orig_find = _cb.find_parts_for_node
+
+def _find_parts_noncomposite(node, organism: str = "", limit: int = 5):
+    # Oversample so the filter has room to drop composites without starving the selector.
+    parts = _orig_find(node, organism=organism, limit=max(limit * 3, 15))
+    atomic = [p for p in parts if not _looks_composite(p)]
+    chosen = atomic if atomic else parts
+    return chosen[:limit]
+
+_cb.find_parts_for_node = _find_parts_noncomposite
+
 if __name__ == "__main__":
     mcp.run(transport="sse")
