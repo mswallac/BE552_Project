@@ -112,18 +112,71 @@ def _find_parts_noncomposite(node, organism: str = "", limit: int = 5):
 
 _cb.find_parts_for_node = _find_parts_noncomposite
 
-# Also filter composites out of the MCP `search_parts` tool path.
-# That tool (in mcp_server.py) calls `_get_store().search(...)` directly on
-# the vector-store singleton — it does NOT go through tools.search_parts.
-# Patching the module-level name is a no-op; we have to wrap the store's
-# bound `search` method on the actual singleton instance. Instantiate the
-# store now (forces construction) and replace its .search.
+# Wrap the vector-store singleton's .search to (a) filter composites and
+# (b) derive a real organism from the description text, since the ingestion
+# pipeline (ingest_igem.py line 161) hardcodes organism="Escherichia coli"
+# for every iGEM part regardless of actual source. Both downstream paths —
+# the MCP `search_parts` tool and circuit_builder.find_parts_for_node —
+# go through store.search, so one patch fixes both.
+import re  # noqa: E402
 import mcp_server as _mcps  # noqa: E402
+
+# Order matters: check longest/most-specific names first so "E. coli" doesn't
+# accidentally match "Escherichia coli Nissle" etc., and more specific species
+# names beat generic genus names.
+_ORGANISM_PATTERNS = [
+    (re.compile(r"\b(?:e\.?\s*coli|escherichia\s*coli)\b", re.I), "Escherichia coli"),
+    (re.compile(r"\b(?:b\.?\s*subtilis|bacillus\s*subtilis)\b", re.I), "Bacillus subtilis"),
+    (re.compile(r"\b(?:s\.?\s*aureus|staphylococcus\s*aureus|staphylococcus)\b", re.I), "Staphylococcus"),
+    (re.compile(r"\b(?:p\.?\s*aeruginosa|pseudomonas\s*aeruginosa)\b", re.I), "Pseudomonas aeruginosa"),
+    (re.compile(r"\b(?:p\.?\s*putida|pseudomonas\s*putida)\b", re.I), "Pseudomonas putida"),
+    (re.compile(r"\bpseudomonas\b", re.I), "Pseudomonas"),
+    (re.compile(r"\b(?:m\.?\s*tuberculosis|mycobacterium\s*tuberculosis)\b", re.I), "Mycobacterium tuberculosis"),
+    (re.compile(r"\b(?:m\.?\s*marinum|mycobacterium\s*marinum)\b", re.I), "Mycobacterium marinum"),
+    (re.compile(r"\bmycobacterium\b", re.I), "Mycobacterium"),
+    (re.compile(r"\b(?:s\.?\s*cerevisiae|saccharomyces\s*cerevisiae)\b", re.I), "Saccharomyces cerevisiae"),
+    (re.compile(r"\b(?:s\.?\s*pombe|schizosaccharomyces\s*pombe)\b", re.I), "Schizosaccharomyces pombe"),
+    (re.compile(r"\b(?:c\.?\s*albicans|candida\s*albicans|candida)\b", re.I), "Candida albicans"),
+    (re.compile(r"\byeast\b", re.I), "yeast (unspecified)"),
+    (re.compile(r"\b(?:s\.?\s*flexneri|shigella\s*flexneri|shigella)\b", re.I), "Shigella flexneri"),
+    (re.compile(r"\b(?:s\.?\s*marcescens|serratia\s*marcescens|serratia)\b", re.I), "Serratia marcescens"),
+    (re.compile(r"\b(?:synechocystis)\b", re.I), "Synechocystis"),
+    (re.compile(r"\b(?:cyanobacteria|cyanobacterium)\b", re.I), "cyanobacteria"),
+    (re.compile(r"\b(?:mammal|human|mouse|HEK293|CHO)\b", re.I), "mammalian"),
+]
+
+def _infer_organism(p) -> str:
+    """Scan description/function/source fields to find an organism mention."""
+    text = " ".join(filter(None, [
+        _field(p, "description"),
+        _field(p, "function"),
+        _field(p, "source"),
+        _field(p, "source_database"),
+    ]))
+    if not text:
+        return ""
+    for pat, name in _ORGANISM_PATTERNS:
+        if pat.search(text):
+            return name
+    return "unknown"
+
+def _rewrite_organism(p):
+    """Mutate in-place: replace the hardcoded organism with an inferred one."""
+    inferred = _infer_organism(p)
+    if inferred:
+        if isinstance(p, dict):
+            p["organism"] = inferred
+        elif hasattr(p, "organism"):
+            try:
+                p.organism = inferred
+            except Exception:
+                pass
+    return p
 
 _store = _mcps._get_store()
 _orig_store_search = _store.search
 
-def _store_search_noncomposite(query, limit: int = 10, part_type=None, **kwargs):
+def _store_search_patched(query, limit: int = 10, part_type=None, **kwargs):
     hits = _orig_store_search(
         query=query,
         limit=max(limit * 3, 15),
@@ -131,9 +184,12 @@ def _store_search_noncomposite(query, limit: int = 10, part_type=None, **kwargs)
         **kwargs,
     )
     atomic = [p for p in hits if not _looks_composite(p)]
-    return (atomic if atomic else hits)[:limit]
+    chosen = (atomic if atomic else hits)[:limit]
+    for p in chosen:
+        _rewrite_organism(p)
+    return chosen
 
-_store.search = _store_search_noncomposite
+_store.search = _store_search_patched
 
 if __name__ == "__main__":
     mcp.run(transport="sse")
