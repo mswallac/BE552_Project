@@ -150,20 +150,24 @@ public class CircuitImportTools {
     }
 
     @Tool(description =
-        "Import a user-specified set of biological parts into Knox as a design space. Prefer this tool " +
-        "over importCircuitAsGoldbar when you want to CHOOSE the parts yourself — MCPGeneBank's " +
-        "build_from_template auto-selector sometimes picks composite/wrong-role parts. Recommended flow: " +
-        "(1) call MCPGeneBank search_parts once per slot with an explicit part_type filter (e.g. " +
-        "part_type=\"promoter\" for a sensor promoter, part_type=\"regulator\" for a TF, part_type=\"reporter\" " +
-        "for GFP/RFP). (2) pick one or more IDs from each search result. (3) lay them out in 5'→3' order " +
-        "as `id:role` pairs separated by commas; separate transcription units with `|`. " +
-        "Roles should be one of: promoter, ribosome_entry_site, CDS, terminator, ribozyme, engineered_region. " +
-        "Example for a mercury→RFP biosensor:\n" +
-        "  tusSpec = \"BBa_K346001:promoter,BBa_B0034:ribosome_entry_site,BBa_K346002:CDS,BBa_B0015:terminator|BBa_R0040:promoter,BBa_B0034:ribosome_entry_site,BBa_E1010:CDS,BBa_B0015:terminator\"\n" +
-        "Returns the new design space ID and a labelled parts list. View at http://localhost:8080.",
+        "Import a user-specified genetic circuit into Knox as a COMBINATORIAL design space — a single slot " +
+        "can hold multiple candidate part IDs, and Knox enumerates the cross-product of choices as valid " +
+        "designs. Prefer this tool over importCircuitAsGoldbar when you want multiple designs or want to " +
+        "choose parts yourself. Recommended flow: " +
+        "(1) for each slot, call MCPGeneBank search_parts once with an explicit part_type filter (e.g. " +
+        "part_type=\"promoter\", part_type=\"regulator\", part_type=\"reporter\"); pick the top 2-3 legit " +
+        "candidates. (2) lay them out in 5'→3' order as `id1+id2+...:role` tokens separated by commas; " +
+        "separate transcription units with `|`. Use `+` within a slot to add alternatives — a slot with " +
+        "N alternatives contributes a factor of N to the design count. Give each functional slot (promoter, " +
+        "reporter CDS, regulator CDS) at least 2 alternatives when possible so the design space has >1 " +
+        "enumerable design. Roles: promoter, ribosome_entry_site, CDS, terminator, ribozyme, engineered_region.\n" +
+        "Example — arsenic→GFP biosensor, 3 constitutive promoter choices × 2 GFP reporter choices:\n" +
+        "  tusSpec = \"BBa_J23100+BBa_J23101+BBa_R0040:promoter,BBa_B0034:ribosome_entry_site,BBa_K1031311:CDS,BBa_B0015:terminator|BBa_K1031907:promoter,BBa_B0034:ribosome_entry_site,BBa_E0040+BBa_K4930007:CDS,BBa_B0015:terminator\"\n" +
+        "  → 3×1×1×1 × 1×1×2×1 = 6 enumerable designs.\n" +
+        "Returns the design space ID, GOLDBAR, labelled slot breakdown, and design-count estimate. View at http://localhost:8080.",
         returnDirect = true)
     String importPartsAsGoldbar(
-            @ToolParam(description = "`|`-separated transcription units; each TU is a comma-separated list of `partId:role` pairs in 5'→3' order. See tool description for example.") String tusSpec,
+            @ToolParam(description = "`|`-separated transcription units; each TU is a comma-separated list of `id1[+id2+id3]:role` slot tokens in 5'→3' order. Use `+` to add alternatives within a slot. See tool description for full example.") String tusSpec,
             @ToolParam(description = "Name for the new Knox design space (e.g. 'mercury_biosensor_v2'). Alphanumeric + underscore/hyphen.") String spaceName) {
 
         System.out.println("\nAI: importPartsAsGoldbar spaceName='" + spaceName + "' tusSpec='" + tusSpec + "'");
@@ -177,38 +181,55 @@ public class CircuitImportTools {
 
         List<String> tuExpressions = new ArrayList<>();
         JSONObject categories = new JSONObject();
-        List<String[]> partLabels = new ArrayList<>(); // [id, role] for the response message
+        List<String[]> slotLabels = new ArrayList<>(); // [role, "id1, id2, id3"] per slot
+        long designCount = 1;
 
+        int tuIdx = 0;
         for (String tuChunk : tusSpec.split("\\|")) {
             tuChunk = tuChunk.trim();
             if (tuChunk.isEmpty()) continue;
             List<String> tuAtoms = new ArrayList<>();
+            int slotIdx = 0;
             for (String token : tuChunk.split(",")) {
                 token = token.trim();
                 if (token.isEmpty()) continue;
-                String partId;
+                String partsPart;
                 String role;
-                int colon = token.indexOf(':');
+                int colon = token.lastIndexOf(':');
                 if (colon > 0) {
-                    partId = token.substring(0, colon).trim();
+                    partsPart = token.substring(0, colon).trim();
                     role = mapTypeToRole(token.substring(colon + 1).trim());
                 } else {
-                    partId = token;
+                    partsPart = token;
                     role = "engineered_region";
                 }
-                if (partId.isEmpty()) continue;
+                if (partsPart.isEmpty()) continue;
 
-                String atom = safeAtom(partId);
-                tuAtoms.add(atom);
-                partLabels.add(new String[]{partId, role});
+                // Alternatives within a slot are separated by '+'. One atom per slot.
+                List<String> altIds = new ArrayList<>();
+                for (String alt : partsPart.split("\\+")) {
+                    alt = alt.trim();
+                    if (!alt.isEmpty()) altIds.add(alt);
+                }
+                if (altIds.isEmpty()) continue;
 
-                if (!categories.has(atom)) categories.put(atom, new JSONObject());
-                JSONObject atomEntry = categories.getJSONObject(atom);
-                if (!atomEntry.has(role)) atomEntry.put(role, new JSONArray());
-                JSONArray ids = atomEntry.getJSONArray(role);
-                if (!containsString(ids, partId)) ids.put(partId);
+                String slotAtom = "s" + tuIdx + "_" + slotIdx + "_" + role;
+                tuAtoms.add(slotAtom);
+                slotLabels.add(new String[]{role, String.join(", ", altIds)});
+                designCount *= altIds.size();
+
+                JSONObject atomEntry = new JSONObject();
+                JSONArray ids = new JSONArray();
+                for (String id : altIds) ids.put(id);
+                atomEntry.put(role, ids);
+                categories.put(slotAtom, atomEntry);
+
+                slotIdx++;
             }
-            if (!tuAtoms.isEmpty()) tuExpressions.add(String.join(" . ", tuAtoms));
+            if (!tuAtoms.isEmpty()) {
+                tuExpressions.add(String.join(" . ", tuAtoms));
+                tuIdx++;
+            }
         }
 
         if (tuExpressions.isEmpty()) {
@@ -229,15 +250,16 @@ public class CircuitImportTools {
                 + "<br>Categories keys: " + categories.keySet();
         }
 
-        StringBuilder partList = new StringBuilder();
-        for (String[] pl : partLabels) {
-            partList.append("&nbsp;&nbsp;").append(pl[0]).append(" <i>(").append(pl[1]).append(")</i><br>");
+        StringBuilder slotList = new StringBuilder();
+        for (String[] sl : slotLabels) {
+            slotList.append("&nbsp;&nbsp;<i>(").append(sl[0]).append(")</i> ").append(sl[1]).append("<br>");
         }
 
         return "Imported design space <b>" + safeSpaceId + "</b><br>"
             + "GOLDBAR: <code>" + goldbar + "</code><br>"
-            + tuExpressions.size() + " transcription unit(s), " + partLabels.size() + " part(s):<br>"
-            + partList
+            + tuExpressions.size() + " transcription unit(s), " + slotLabels.size() + " slot(s), "
+            + "<b>" + designCount + " enumerable design(s)</b>:<br>"
+            + slotList
             + "View the graph at <a href='http://localhost:8080' target='_blank'>http://localhost:8080</a>.";
     }
 
