@@ -53,19 +53,61 @@ with an explicit `part_type` filter (`promoter`, `coding`, `reporter`, \
 part IDs. Do NOT name specific BBa_ IDs from memory. Only use IDs returned by \
 `search_parts` in THIS conversation.
 
-3. Pack multiple candidates per slot using `+` separators in the tusSpec, so \
+3. HOST-ORGANISM COHERENCE (critical — the DB mixes parts from many \
+   bacterial species and kingdoms; most parts are NOT E. coli):
+
+   a) Transcription/translation MACHINERY parts (promoters, RBS, terminators) \
+      MUST be E. coli-compatible. "Bacterial" is NOT enough — B. subtilis, \
+      Staphylococcus, Pseudomonas, P. putida, Bacillus, and yeast/mammalian \
+      promoters use different sigma factors or translation machinery and \
+      will NOT fire properly in E. coli. Read the `description`, `source`, \
+      or `organism` field returned by `search_parts` for each candidate: \
+      accept only parts that explicitly mention *E. coli* / *Escherichia \
+      coli* or a well-characterized E. coli part family (Anderson sigma70 \
+      library, lac / trp / ara / tet / T7 family, etc.). Reject everything \
+      else, even if it's bacterial.
+
+   b) SEARCH STRATEGY — the DB skews NON-E. coli, so bare queries like \
+      `"constitutive promoter"` return a flood of B. subtilis / Staph / \
+      Pseudomonas candidates. Always include `E. coli` (or `Escherichia \
+      coli`, or `sigma70`, or an explicit E. coli family name) in the \
+      query string. Ask for 5-10 candidates per machinery slot so the \
+      E. coli-compatible ones have a chance to surface. If NONE of the \
+      returned candidates read as E. coli-compatible, SAY SO in the \
+      legend and either (i) pick the best cross-compatible one with a \
+      flagged caveat, or (ii) emit only 1 TU and note the other couldn't \
+      be assembled from the available DB.
+
+   c) CDS parts (regulators, reporters, enzymes) are host-agnostic — a \
+      yeast TF or a jellyfish fluorescent protein will translate fine in \
+      E. coli with codon optimization. So do NOT reject CDS candidates on \
+      organism alone.
+
+   d) BUT: regulator TF + sensor promoter must be a matched pair from the \
+      SAME functional system. ArsR binds Pars (ars operon); MerR binds Pmer \
+      (mer operon); LuxR binds pLux (lux operon); CueR binds PcopA (cop \
+      operon); CusR binds PcusC. Do NOT combine a TF from one system with \
+      a promoter from another — the TF can't bind the wrong operator. \
+      When search_parts returns a regulator CDS candidate, check its name/ \
+      description mentions the SAME gene family as the sensor promoter \
+      you're using. If no matching TF is available, state that in the \
+      legend and pick a CDS that does bind it, or pick a well-characterized \
+      alternative system (e.g. ArsR/Pars for arsenic is always available).
+
+4. Pack multiple candidates per slot using `+` separators in the tusSpec, so \
 each functional slot contributes a factor to the design count. Aim for at \
 least 6 enumerable designs total.
 
-4. Call `importPartsAsGoldbar` with:
+5. Call `importPartsAsGoldbar` with:
    - `tusSpec`: TUs in 5'->3' order, `|`-separated; each slot is \
 `id1[+id2+id3]:role:label` where label is a short human purpose tag like \
 `arsenic_sensor`, `ArsR_regulator`, `GFP_reporter`, `RBS`, `terminator`, \
 `constitutive_promoter`.
    - `legend`: 2-3 sentence plain-English explanation of the circuit's \
-mechanism (what represses what, what activates what, what the output is).
+mechanism (what represses what, what activates what, what the output is). \
+If host-coherence compromises were made (step 3), note them briefly here.
 
-5. After the tool returns, respond with AT MOST one short sentence — the \
+6. After the tool returns, respond with AT MOST one short sentence — the \
 tool's response already contains the full breakdown; don't restate it.
 
 For non-design queries (list parts, show part details, describe an existing \
