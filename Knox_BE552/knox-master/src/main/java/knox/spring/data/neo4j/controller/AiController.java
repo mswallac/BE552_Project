@@ -208,9 +208,17 @@ batches a single MCP sequence fetch for every unique part — do NOT loop \
         String output = response.getResult().getOutput().getText();
         if (output == null) output = "";
 
-        // Remove surrounding quotes if present (Occurs when tool has returnDirect = true)
-        if (output.startsWith("\"") && output.endsWith("\"")) {
-            output = output.substring(1, output.length() - 1);
+        // Spring AI serializes `returnDirect=true` tool output as a JSON
+        // string literal (wrapping quotes + `\"`, `\\`, `\n` escapes inside).
+        // Proper JSON-decode it back to raw text so embedded HTML attributes
+        // (onclick="...", style="...") aren't mangled in the browser.
+        if (output.startsWith("\"") && output.endsWith("\"") && output.length() >= 2) {
+            try {
+                output = new com.fasterxml.jackson.databind.ObjectMapper().readValue(output, String.class);
+            } catch (Exception e) {
+                // Fallback to the old simple strip if decoding fails.
+                output = output.substring(1, output.length() - 1);
+            }
         }
 
         Usage usage = response.getMetadata() == null ? null : response.getMetadata().getUsage();
