@@ -2475,7 +2475,7 @@ function renderSequenceViewer(spaceID, designIdx, design) {
   container.style.textAlign = 'left';
 
   const hdr = document.createElement('div');
-  hdr.innerHTML = '<b>' + spaceID + '</b> — design ' + designIdx + ' · ' +
+  hdr.innerHTML = '<b>' + escHtml(spaceID) + '</b> — design ' + designIdx + ' · ' +
                   design.assembled_length + ' bp · ' + design.slots.length + ' slots' +
                   (design.any_protein ? ' <i>(protein CDS present)</i>' : '');
   container.appendChild(hdr);
@@ -2518,8 +2518,8 @@ function renderSequenceViewer(spaceID, designIdx, design) {
     row.style.background = '#fafafa';
 
     const head = document.createElement('div');
-    head.innerHTML = '<b>Slot ' + (i + 1) + '</b> · ' + slot.part_id +
-                     ' <i>(' + friendlyRole(slot.role) + ', ' +
+    head.innerHTML = '<b>Slot ' + (i + 1) + '</b> · ' + escHtml(slot.part_id) +
+                     ' <i>(' + escHtml(friendlyRole(slot.role)) + ', ' +
                      slot.length + (slot.is_protein ? ' aa' : ' bp') + ')</i>';
     row.appendChild(head);
 
@@ -2570,7 +2570,7 @@ function renderSequenceViewer(spaceID, designIdx, design) {
         });
         const d = await resp.json();
         if (d.error) {
-          resultDiv.innerHTML = '<span style="color:#c00">Error: ' + d.error + '</span>';
+          resultDiv.innerHTML = '<span style="color:#c00">Error: ' + escHtml(d.error) + '</span>';
         } else {
           resultDiv.innerHTML =
             '<div style="margin-top:6px"><b>Evo 2 proposal</b> — ' +
@@ -2579,13 +2579,13 @@ function renderSequenceViewer(spaceID, designIdx, design) {
               ' · seed ' + d.seed_length + ' bp 5\' context</div>' +
             '<div style="font-family:monospace;font-size:11px;word-break:break-all;' +
               'background:#e8f5e9;padding:4px;margin-top:4px">' +
-              (d.proposed_sequence || '(empty)') + '</div>' +
+              (d.proposed_sequence ? escHtml(d.proposed_sequence) : '(empty)') + '</div>' +
             '<div style="margin-top:6px;color:#666">Original (' + d.original_length + ' bp):</div>' +
             '<div style="font-family:monospace;font-size:11px;word-break:break-all;' +
-              'background:#fff3e0;padding:4px">' + d.original_sequence + '</div>';
+              'background:#fff3e0;padding:4px">' + escHtml(d.original_sequence || '') + '</div>';
         }
       } catch (e) {
-        resultDiv.innerHTML = '<span style="color:#c00">Network error: ' + e.message + '</span>';
+        resultDiv.innerHTML = '<span style="color:#c00">Network error: ' + escHtml(e.message) + '</span>';
       } finally {
         btn.disabled = !!gate;
         btn.textContent = gate ? ('Regenerate disabled — ' + gate) : 'Regenerate with Evo 2';
@@ -2621,4 +2621,16 @@ function roleColor(role) {
     case 'terminator': return '#e57373'; // red
     default:           return '#b0bec5'; // gray
   }
+}
+
+// Minimal HTML-escape for interpolating server data into innerHTML. Server
+// data is generally trusted but space IDs come from a user query param and
+// error strings can include upstream MCP output — escape defensively.
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
