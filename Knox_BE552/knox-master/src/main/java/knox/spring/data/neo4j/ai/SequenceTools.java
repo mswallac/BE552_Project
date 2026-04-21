@@ -209,6 +209,12 @@ public class SequenceTools {
         }
         try {
             JsonNode node = mapper.readTree(raw);
+            // Spring AI's SyncMcpToolCallback wraps the MCP server's text
+            // output as [{"text": "<stringified JSON>"}]. Unwrap before parsing.
+            if (node.isArray() && node.size() > 0 && node.get(0).has("text")) {
+                String inner = node.get(0).path("text").asText("");
+                node = mapper.readTree(inner);
+            }
             JsonNode results = node.path("results");
             if (results.isObject()) {
                 Iterator<String> fields = results.fieldNames();

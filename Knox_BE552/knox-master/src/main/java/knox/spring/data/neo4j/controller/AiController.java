@@ -279,15 +279,31 @@ batches a single MCP sequence fetch for every unique part — do NOT loop \
     // client name (e.g. `spring_ai_mcp_client_...get_parts_batch`), so we
     // match by suffix.
     private Function<List<String>, String> resolveGetPartsBatch(ToolCallback[] tools) {
+        // Dump all tool names first so we can diagnose name transformations
+        // applied by Spring AI's MCP client (prefix, case, hyphen/underscore).
+        StringBuilder seen = new StringBuilder();
+        for (ToolCallback tc : tools) {
+            seen.append(tc.getToolDefinition().name()).append(' ');
+        }
+        System.out.println("MCP tools discovered: " + seen);
+
+        // Anchor to `get_parts_batch` — must not collide with search_parts_batch.
         ToolCallback batch = null;
         for (ToolCallback tc : tools) {
             String name = tc.getToolDefinition().name();
-            if (name != null && name.endsWith("get_parts_batch")) {
+            if (name == null) continue;
+            String norm = name.toLowerCase().replace('-', '_');
+            if (norm.endsWith("get_parts_batch") || norm.equals("getpartsbatch")
+                    || norm.endsWith("_getpartsbatch")) {
                 batch = tc;
                 break;
             }
         }
-        if (batch == null) return null;
+        if (batch == null) {
+            System.out.println("No get_parts_batch tool matched — SequenceTools will report 'unreachable'.");
+            return null;
+        }
+        System.out.println("Bound get_parts_batch -> " + batch.getToolDefinition().name());
         final ToolCallback cb = batch;
         final ObjectMapper om = new ObjectMapper();
         return (List<String> ids) -> {
