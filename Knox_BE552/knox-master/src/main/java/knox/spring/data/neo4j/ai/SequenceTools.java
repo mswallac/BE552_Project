@@ -216,7 +216,8 @@ public class SequenceTools {
                     String pid = fields.next();
                     JsonNode part = results.get(pid);
                     String seq = part.path("sequence").asText("");
-                    boolean isProtein = looksLikeProtein(seq);
+                    String source = part.path("source").asText("");
+                    boolean isProtein = isProteinSeq(seq, source);
                     out.put(pid, new PartSeq(seq, isProtein, ""));
                 }
             }
@@ -231,14 +232,30 @@ public class SequenceTools {
         return out;
     }
 
-    private static boolean looksLikeProtein(String seq) {
+    // Source metadata is authoritative — UniProt is our only protein source.
+    // Fall back to a char-ratio check for any part without a source tag: if
+    // >10% of non-whitespace chars are outside IUPAC DNA/RNA, call it protein.
+    // This tolerates IUPAC ambiguity codes (R/Y/S/W/K/M/B/D/H/V/N) and gap
+    // chars that the old strict whitelist falsely flagged.
+    private static boolean isProteinSeq(String seq, String source) {
         if (seq == null || seq.isEmpty()) return false;
+        if ("uniprot".equalsIgnoreCase(source)) return true;
+        int total = 0;
+        int nonDna = 0;
         for (int i = 0; i < seq.length(); i++) {
             char ch = Character.toUpperCase(seq.charAt(i));
-            if (ch != 'A' && ch != 'C' && ch != 'G' && ch != 'T' && ch != 'U' && ch != 'N' && ch != '-') {
-                return true;
+            if (Character.isWhitespace(ch)) continue;
+            total++;
+            switch (ch) {
+                case 'A': case 'C': case 'G': case 'T': case 'U':
+                case 'R': case 'Y': case 'S': case 'W': case 'K':
+                case 'M': case 'B': case 'D': case 'H': case 'V':
+                case 'N': case '-': case '.':
+                    break;
+                default:
+                    nonDna++;
             }
         }
-        return false;
+        return total > 0 && (nonDna * 10) > total;
     }
 }
