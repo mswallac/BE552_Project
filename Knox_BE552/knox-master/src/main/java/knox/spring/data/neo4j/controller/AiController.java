@@ -193,7 +193,7 @@ and answer concisely.
             output = output.substring(1, output.length() - 1);
         }
 
-        Usage usage = response.getMetadata().getUsage();
+        Usage usage = response.getMetadata() == null ? null : response.getMetadata().getUsage();
         int promptTokens = usage == null ? 0 : usage.getPromptTokens();
         int completionTokens = usage == null ? 0 : usage.getCompletionTokens();
         int totalTokens = usage == null ? 0 : usage.getTotalTokens();
