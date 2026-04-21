@@ -21,9 +21,6 @@ import knox.spring.data.neo4j.ai.GoldbarTools;
 import knox.spring.data.neo4j.ai.CircuitImportTools;
 import knox.spring.data.neo4j.ai.SequenceTools;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.HashMap;
 import java.util.function.Function;
 
 import knox.spring.data.neo4j.services.DesignSpaceService;
@@ -272,50 +269,17 @@ batches a single MCP sequence fetch for every unique part — do NOT loop \
         return key == null || key.isBlank() || DISABLED.equals(key);
     }
 
-    // Locate the MCP `get_parts_batch` tool and expose it as a plain
-    // List<String> -> String function. Returns null if the MCP server is
-    // absent — SequenceTools handles that by annotating each part as
-    // "MCPGeneBank unreachable". Spring AI prefixes MCP tool names with the
-    // client name (e.g. `spring_ai_mcp_client_...get_parts_batch`), so we
-    // match by suffix.
+    // Thin wrapper around the shared static resolver in SequenceTools that
+    // also logs the set of discovered MCP tool names (useful when Spring AI
+    // renames or prefixes them differently across versions).
     private Function<List<String>, String> resolveGetPartsBatch(ToolCallback[] tools) {
-        // Dump all tool names first so we can diagnose name transformations
-        // applied by Spring AI's MCP client (prefix, case, hyphen/underscore).
         StringBuilder seen = new StringBuilder();
-        for (ToolCallback tc : tools) {
-            seen.append(tc.getToolDefinition().name()).append(' ');
-        }
+        for (ToolCallback tc : tools) seen.append(tc.getToolDefinition().name()).append(' ');
         System.out.println("MCP tools discovered: " + seen);
-
-        // Anchor to `get_parts_batch` — must not collide with search_parts_batch.
-        ToolCallback batch = null;
-        for (ToolCallback tc : tools) {
-            String name = tc.getToolDefinition().name();
-            if (name == null) continue;
-            String norm = name.toLowerCase().replace('-', '_');
-            if (norm.endsWith("get_parts_batch") || norm.equals("getpartsbatch")
-                    || norm.endsWith("_getpartsbatch")) {
-                batch = tc;
-                break;
-            }
-        }
-        if (batch == null) {
+        Function<List<String>, String> fn = SequenceTools.resolveGetPartsBatch(tools);
+        if (fn == null) {
             System.out.println("No get_parts_batch tool matched — SequenceTools will report 'unreachable'.");
-            return null;
         }
-        System.out.println("Bound get_parts_batch -> " + batch.getToolDefinition().name());
-        final ToolCallback cb = batch;
-        final ObjectMapper om = new ObjectMapper();
-        return (List<String> ids) -> {
-            try {
-                Map<String, Object> args = new HashMap<>();
-                args.put("part_ids", ids);
-                String json = om.writeValueAsString(args);
-                return cb.call(json);
-            } catch (Exception e) {
-                System.out.println("get_parts_batch invocation failed: " + e.getMessage());
-                return "{\"results\":{},\"missing\":" + ids.size() + "}";
-            }
-        };
+        return fn;
     }
 }
