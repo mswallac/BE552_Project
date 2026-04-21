@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
@@ -39,6 +40,16 @@ public class SequenceTools {
         this.designSpaceService = designSpaceService;
         this.getPartsBatchMcp = getPartsBatchMcp;
     }
+
+    // Structured representations returned by enumerateWithSequences. Used by
+    // the REST controller (SequenceViewController) for the sequence-viewer UI
+    // and by the HTML @Tool wrapper below.
+    public record SlotView(int index, String partId, String role,
+                           String sequence, boolean isProtein,
+                           int offset, int length, String note) {}
+    public record DesignView(int index, String spaceId,
+                             String assembledSequence,
+                             List<SlotView> slots, boolean anyProtein) {}
 
     @Tool(description =
         "Enumerate up to N distinct designs from a Knox design space by walking " +
@@ -109,19 +120,64 @@ public class SequenceTools {
         System.out.println("\nAI: getDesignSequences spaceID='" + spaceID + "' n=" + numDesigns);
         int n = (numDesigns <= 0) ? 3 : Math.min(numDesigns, 20);
 
-        Collection<List<Map<String, Object>>> designs;
+        List<DesignView> views;
         try {
-            designs = designSpaceService.enumerateDesignSpace(
-                spaceID, n, 1, 0, 1, EnumerateType.DFS,
-                true, true, false, false);
+            views = enumerateWithSequences(spaceID, n);
         } catch (Exception e) {
             return "Error enumerating '" + spaceID + "': " + e.getMessage();
         }
-        if (designs.isEmpty()) {
+        if (views.isEmpty()) {
             return "No designs found in '" + spaceID + "'.";
         }
 
-        // 1) Collect every unique part ID across all designs.
+        int uniqueCount = 0;
+        HashSet<String> uniq = new HashSet<>();
+        for (DesignView d : views) for (SlotView s : d.slots()) if (uniq.add(s.partId())) uniqueCount++;
+
+        StringBuilder out = new StringBuilder();
+        out.append("Assembled DNA sequences for ").append(views.size())
+           .append(" design(s) from <b>").append(spaceID).append("</b><br>")
+           .append("(").append(uniqueCount).append(" unique parts, 1 batch MCP call)<br><br>");
+
+        for (DesignView dv : views) {
+            out.append("<b>&gt;").append(dv.spaceId()).append(" design ").append(dv.index())
+               .append(" | ").append(dv.assembledSequence().length()).append(" bp")
+               .append(dv.anyProtein() ? " (protein CDS parts omitted)" : "")
+               .append("</b> ")
+               .append("<button onclick=\"openSequenceViewer('").append(dv.spaceId())
+               .append("', ").append(dv.index()).append(")\">View</button>")
+               .append("<br>");
+            out.append("<code style=\"word-break:break-all;\">")
+               .append(dv.assembledSequence())
+               .append("</code><br>");
+            for (SlotView s : dv.slots()) {
+                out.append(String.format(
+                    "&nbsp;&nbsp;%d. %s <i>(%s)</i> — %d %s%s<br>",
+                    s.index() + 1, s.partId(),
+                    s.role().isEmpty() ? "?" : s.role(),
+                    s.sequence().length(),
+                    s.isProtein() ? "aa (protein — skipped in concat)"
+                                  : (s.sequence().isEmpty() ? "" : "bp"),
+                    s.note().isEmpty() ? "" : " — " + s.note()));
+            }
+            out.append("<br>");
+        }
+        return out.toString();
+    }
+
+    /**
+     * Enumerate the design space and batch-fetch part sequences. Public so the
+     * REST controller (SequenceViewController) can reuse it to drive the
+     * sequence-viewer UI without going through the LLM.
+     */
+    public List<DesignView> enumerateWithSequences(String spaceID, int numDesigns) {
+        int n = (numDesigns <= 0) ? 3 : Math.min(numDesigns, 50);
+
+        Collection<List<Map<String, Object>>> designs = designSpaceService.enumerateDesignSpace(
+            spaceID, n, 1, 0, 1, EnumerateType.DFS,
+            true, true, false, false);
+        if (designs.isEmpty()) return List.of();
+
         LinkedHashSet<String> uniqueIds = new LinkedHashSet<>();
         for (List<Map<String, Object>> design : designs) {
             for (Map<String, Object> p : design) {
@@ -131,20 +187,13 @@ public class SequenceTools {
             }
         }
         System.out.println("Unique parts across " + designs.size() + " designs: " + uniqueIds.size());
-
-        // 2) ONE MCP round-trip for all sequences.
         Map<String, PartSeq> seqMap = batchFetch(new ArrayList<>(uniqueIds));
 
-        // 3) Render FASTA for each design by map lookup.
-        StringBuilder out = new StringBuilder();
-        out.append("Assembled DNA sequences for ").append(designs.size())
-           .append(" design(s) from <b>").append(spaceID).append("</b><br>")
-           .append("(").append(uniqueIds.size()).append(" unique parts, 1 batch MCP call)<br><br>");
-
+        List<DesignView> out = new ArrayList<>();
         int idx = 0;
         for (List<Map<String, Object>> design : designs) {
-            StringBuilder seq = new StringBuilder();
-            StringBuilder breakdown = new StringBuilder();
+            List<SlotView> slots = new ArrayList<>();
+            StringBuilder assembled = new StringBuilder();
             boolean anyProtein = false;
             int slotIdx = 0;
             for (Map<String, Object> p : design) {
@@ -153,29 +202,14 @@ public class SequenceTools {
                 String role = Objects.toString(p.get("roles"), "");
                 PartSeq ps = seqMap.getOrDefault(partId, new PartSeq("", false, "missing from DB"));
                 if (ps.isProtein) anyProtein = true;
-                if (!ps.isProtein) seq.append(ps.sequence);
-                breakdown.append(String.format(
-                    "&nbsp;&nbsp;%d. %s <i>(%s)</i> — %d %s%s<br>",
-                    ++slotIdx,
-                    partId,
-                    role.isEmpty() ? "?" : role,
-                    ps.sequence.length(),
-                    ps.isProtein ? "aa (protein — skipped in concat)"
-                                 : (ps.sequence.isEmpty() ? "" : "bp"),
-                    ps.note.isEmpty() ? "" : " — " + ps.note));
+                int offset = assembled.length();
+                if (!ps.isProtein) assembled.append(ps.sequence);
+                slots.add(new SlotView(slotIdx++, partId, role, ps.sequence,
+                                       ps.isProtein, offset, ps.sequence.length(), ps.note));
             }
-            out.append("<b>&gt;").append(spaceID).append(" design ").append(idx)
-               .append(" | ").append(seq.length()).append(" bp")
-               .append(anyProtein ? " (protein CDS parts omitted)" : "")
-               .append("</b><br>");
-            out.append("<code style=\"word-break:break-all;\">")
-               .append(seq)
-               .append("</code><br>")
-               .append(breakdown)
-               .append("<br>");
-            idx++;
+            out.add(new DesignView(idx++, spaceID, assembled.toString(), slots, anyProtein));
         }
-        return out.toString();
+        return out;
     }
 
     // ── helpers ──────────────────────────────────────────────────────
@@ -263,5 +297,40 @@ public class SequenceTools {
             }
         }
         return total > 0 && (nonDna * 10) > total;
+    }
+
+    /**
+     * Find the MCP `get_parts_batch` ToolCallback and wrap it as a plain
+     * List&lt;String&gt; -&gt; String function. Shared by AiController (for
+     * SequenceTools @Tool instantiation) and SequenceViewController (for the
+     * REST endpoints). Returns null if no matching MCP tool is discovered.
+     */
+    public static Function<List<String>, String> resolveGetPartsBatch(ToolCallback[] tools) {
+        if (tools == null) return null;
+        ToolCallback batch = null;
+        for (ToolCallback tc : tools) {
+            String name = tc.getToolDefinition().name();
+            if (name == null) continue;
+            String norm = name.toLowerCase().replace('-', '_');
+            if (norm.endsWith("get_parts_batch")
+                    || norm.equals("getpartsbatch")
+                    || norm.endsWith("_getpartsbatch")) {
+                batch = tc;
+                break;
+            }
+        }
+        if (batch == null) return null;
+        final ToolCallback cb = batch;
+        final ObjectMapper om = new ObjectMapper();
+        return (List<String> ids) -> {
+            try {
+                Map<String, Object> args = new HashMap<>();
+                args.put("part_ids", ids);
+                return cb.call(om.writeValueAsString(args));
+            } catch (Exception e) {
+                System.out.println("get_parts_batch invocation failed: " + e.getMessage());
+                return "{\"results\":{},\"missing\":" + ids.size() + "}";
+            }
+        };
     }
 }

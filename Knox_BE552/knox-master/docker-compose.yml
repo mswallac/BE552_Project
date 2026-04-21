@@ -33,6 +33,9 @@ services:
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-disabled}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-disabled}
 
+      # NVIDIA BioNeMo NIM — Evo 2 40B generative fill (see issue #26)
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-disabled}
+
       # MCP client — point Knox at the host's MCPGeneBank SSE server.
       # MCPGeneBank is run manually on the host (see CLAUDE.md).
       MCPGENEBANK_URL: ${MCPGENEBANK_URL:-http://host.docker.internal:8000}

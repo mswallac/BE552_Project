@@ -2444,3 +2444,181 @@ let promptContext = "You are an AI assistant (agent) in Knox (with access to cer
   //+ " Make sure to confirm with the user before applying any operations to design spaces."
   + "\nKeywords for frontend actions (Always use keywords when sent by a Tool) and (only use one keyword at end) and (always place keywords at the end):\n"
   + "VISUALIZE_DESIGN_SPACE(spaceid) - use this keyword to visualize a design space\n";
+
+// ─── Sequence Viewer (issue #26) ──────────────────────────────────────
+// Triggered by the "View" button that getDesignSequences renders into each
+// design's Fetch Sequences output. Fetches structured per-slot JSON via
+// /designs/sequences and renders a colored slot map + per-slot "Regenerate
+// with Evo 2" buttons that POST to /evo2/fill.
+
+window.openSequenceViewer = async function(spaceID, designIdx) {
+  const loading = document.createElement('div');
+  loading.textContent = 'Loading design sequence...';
+  swal({title: 'Sequence Viewer', content: loading, className: 'enumeration-swal'});
+  try {
+    const resp = await fetch('/designs/sequences?spaceID=' + encodeURIComponent(spaceID) +
+                             '&n=' + (designIdx + 1));
+    const data = await resp.json();
+    if (!data.designs || designIdx >= data.designs.length) {
+      swalError('Design ' + designIdx + ' not found in space ' + spaceID);
+      return;
+    }
+    renderSequenceViewer(spaceID, designIdx, data.designs[designIdx]);
+  } catch (e) {
+    swalError('Failed to fetch sequences: ' + e.message);
+  }
+};
+
+function renderSequenceViewer(spaceID, designIdx, design) {
+  const container = document.createElement('div');
+  container.style.fontFamily = 'sans-serif';
+  container.style.textAlign = 'left';
+
+  const hdr = document.createElement('div');
+  hdr.innerHTML = '<b>' + spaceID + '</b> — design ' + designIdx + ' · ' +
+                  design.assembled_length + ' bp · ' + design.slots.length + ' slots' +
+                  (design.any_protein ? ' <i>(protein CDS present)</i>' : '');
+  container.appendChild(hdr);
+
+  // Horizontal slot map, colored by role. Widths proportional to sequence length.
+  const total = Math.max(design.assembled_length, 1);
+  const mapDiv = document.createElement('div');
+  mapDiv.style.display = 'flex';
+  mapDiv.style.margin = '10px 0';
+  mapDiv.style.border = '1px solid #999';
+  mapDiv.style.borderRadius = '3px';
+  mapDiv.style.overflow = 'hidden';
+  mapDiv.style.height = '30px';
+  mapDiv.style.fontSize = '10px';
+  design.slots.forEach(slot => {
+    const bar = document.createElement('div');
+    const pct = slot.length / total * 100;
+    bar.style.flex = (slot.is_protein ? '0 0 30px' : Math.max(pct, 2).toFixed(2) + '%');
+    bar.style.backgroundColor = roleColor(slot.role);
+    bar.style.borderRight = '1px solid rgba(0,0,0,0.15)';
+    bar.style.display = 'flex';
+    bar.style.alignItems = 'center';
+    bar.style.justifyContent = 'center';
+    bar.style.color = '#222';
+    bar.style.whiteSpace = 'nowrap';
+    bar.style.overflow = 'hidden';
+    bar.title = slot.part_id + ' — ' + friendlyRole(slot.role) +
+                ' · ' + slot.length + (slot.is_protein ? ' aa (protein)' : ' bp');
+    bar.textContent = friendlyRole(slot.role);
+    mapDiv.appendChild(bar);
+  });
+  container.appendChild(mapDiv);
+
+  // Per-slot details + regenerate button
+  design.slots.forEach((slot, i) => {
+    const row = document.createElement('div');
+    row.style.margin = '10px 0';
+    row.style.padding = '6px 8px';
+    row.style.borderLeft = '5px solid ' + roleColor(slot.role);
+    row.style.background = '#fafafa';
+
+    const head = document.createElement('div');
+    head.innerHTML = '<b>Slot ' + (i + 1) + '</b> · ' + slot.part_id +
+                     ' <i>(' + friendlyRole(slot.role) + ', ' +
+                     slot.length + (slot.is_protein ? ' aa' : ' bp') + ')</i>';
+    row.appendChild(head);
+
+    const seqDiv = document.createElement('div');
+    seqDiv.style.fontFamily = 'monospace';
+    seqDiv.style.fontSize = '11px';
+    seqDiv.style.wordBreak = 'break-all';
+    seqDiv.style.margin = '4px 0';
+    seqDiv.style.color = '#555';
+    seqDiv.textContent = slot.sequence.length > 300
+        ? slot.sequence.slice(0, 300) + '… (' + slot.sequence.length + ' total)'
+        : slot.sequence;
+    row.appendChild(seqDiv);
+
+    const btn = document.createElement('button');
+    btn.textContent = 'Regenerate with Evo 2';
+
+    // Gate regenerate: slot itself or any upstream slot being a protein CDS
+    // means we can't build coherent DNA 5' context.
+    let gate = null;
+    if (slot.is_protein) gate = 'protein CDS — Evo 2 operates on DNA only';
+    else {
+      for (let j = 0; j < i; j++) {
+        if (design.slots[j].is_protein) {
+          gate = 'upstream protein CDS breaks DNA context';
+          break;
+        }
+      }
+    }
+    if (gate) {
+      btn.disabled = true;
+      btn.title = gate;
+      btn.textContent = 'Regenerate disabled — ' + gate;
+    }
+
+    const resultDiv = document.createElement('div');
+    resultDiv.style.margin = '6px 0';
+
+    btn.onclick = async function() {
+      btn.disabled = true;
+      btn.textContent = 'Calling Evo 2…';
+      resultDiv.innerHTML = '';
+      try {
+        const resp = await fetch('/evo2/fill', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({spaceID: spaceID, designIdx: designIdx, slotIdx: i})
+        });
+        const d = await resp.json();
+        if (d.error) {
+          resultDiv.innerHTML = '<span style="color:#c00">Error: ' + d.error + '</span>';
+        } else {
+          resultDiv.innerHTML =
+            '<div style="margin-top:6px"><b>Evo 2 proposal</b> — ' +
+              d.proposed_length + ' bp · mean sampled prob ' +
+              (d.mean_sampled_prob || 0).toFixed(3) + ' · ' + d.elapsed_ms + ' ms' +
+              ' · seed ' + d.seed_length + ' bp 5\' context</div>' +
+            '<div style="font-family:monospace;font-size:11px;word-break:break-all;' +
+              'background:#e8f5e9;padding:4px;margin-top:4px">' +
+              (d.proposed_sequence || '(empty)') + '</div>' +
+            '<div style="margin-top:6px;color:#666">Original (' + d.original_length + ' bp):</div>' +
+            '<div style="font-family:monospace;font-size:11px;word-break:break-all;' +
+              'background:#fff3e0;padding:4px">' + d.original_sequence + '</div>';
+        }
+      } catch (e) {
+        resultDiv.innerHTML = '<span style="color:#c00">Network error: ' + e.message + '</span>';
+      } finally {
+        btn.disabled = !!gate;
+        btn.textContent = gate ? ('Regenerate disabled — ' + gate) : 'Regenerate with Evo 2';
+      }
+    };
+    row.appendChild(btn);
+    row.appendChild(resultDiv);
+    container.appendChild(row);
+  });
+
+  swal({title: 'Sequence Viewer', content: container, className: 'enumeration-swal'});
+}
+
+function friendlyRole(role) {
+  if (!role) return 'unknown';
+  if (role.indexOf('SO:0000167') >= 0) return 'promoter';
+  if (role.indexOf('SO:0000139') >= 0) return 'RBS';
+  if (role.indexOf('SO:0000141') >= 0) return 'terminator';
+  if (role.indexOf('SO:0000316') >= 0) return 'CDS';
+  if (role === 'ribosome_entry_site' || role === 'RBS') return 'RBS';
+  if (role === 'CDS' || role.toLowerCase() === 'coding') return 'CDS';
+  if (role.toLowerCase().indexOf('promoter') >= 0) return 'promoter';
+  if (role.toLowerCase().indexOf('terminator') >= 0) return 'terminator';
+  if (role.toLowerCase().indexOf('rbs') >= 0) return 'RBS';
+  return role.length > 20 ? role.slice(-15) : role;
+}
+
+function roleColor(role) {
+  switch (friendlyRole(role)) {
+    case 'promoter':   return '#ffb74d'; // orange
+    case 'RBS':        return '#fff176'; // yellow
+    case 'CDS':        return '#81c784'; // green
+    case 'terminator': return '#e57373'; // red
+    default:           return '#b0bec5'; // gray
+  }
+}
