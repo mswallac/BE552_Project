@@ -37,3 +37,4 @@ results/
 
 # Docker
 neo4j_data/
+.worktrees
