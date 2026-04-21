@@ -1128,6 +1128,38 @@ $('#enumerate-designs-tooltip').click(() => {
               };
               div.appendChild(exportBtn);
 
+              // Fetch assembled DNA sequences for the enumerated designs via
+              // the AI agent (routes to SequenceTools.getDesignSequences, which
+              // does one batched MCP call against MCPGeneBank for all unique
+              // part IDs in the space).
+              const seqBtn = document.createElement('button');
+              seqBtn.textContent = "Fetch Sequences";
+              seqBtn.style.marginLeft = "8px";
+              const seqOut = document.createElement('div');
+              seqOut.style.marginTop = "10px";
+              seqBtn.onclick = async function() {
+                const n = Math.min(Math.max(parseInt(numDesigns, 10) || 3, 1), 20);
+                seqBtn.disabled = true;
+                seqBtn.textContent = "Fetching…";
+                seqOut.innerHTML = "";
+                const prompt = "Get assembled DNA sequences for " + n +
+                  " designs from space " + currentSpace +
+                  " using getDesignSequences.";
+                try {
+                  const resp = await fetch('/agent?prompt=' + encodeURIComponent(prompt) +
+                    '&includeCost=false', { method: 'POST' });
+                  const text = await resp.text();
+                  seqOut.innerHTML = text;
+                } catch (e) {
+                  seqOut.textContent = "Sequence fetch failed: " + e.message;
+                } finally {
+                  seqBtn.disabled = false;
+                  seqBtn.textContent = "Fetch Sequences";
+                }
+              };
+              div.appendChild(seqBtn);
+              div.appendChild(seqOut);
+
               let para = document.createElement("p");
               para.appendChild(document.createElement('br'));
               para.appendChild(document.createElement('br'));

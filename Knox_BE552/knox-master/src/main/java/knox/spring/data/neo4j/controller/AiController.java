@@ -19,6 +19,12 @@ import knox.spring.data.neo4j.ai.DesignTools;
 import knox.spring.data.neo4j.ai.OperatorTools;
 import knox.spring.data.neo4j.ai.GoldbarTools;
 import knox.spring.data.neo4j.ai.CircuitImportTools;
+import knox.spring.data.neo4j.ai.SequenceTools;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.HashMap;
+import java.util.function.Function;
 
 import knox.spring.data.neo4j.services.DesignSpaceService;
 
@@ -84,6 +90,12 @@ Then respond with ONE short sentence — the tool output has the full breakdown.
 
 For non-design queries (list/describe/detail), use the other tools directly \
 and answer concisely.
+
+SEQUENCES: when the user asks for sequences / DNA / FASTA for a design space, \
+call `getDesignSequences` (spaceID, numDesigns). It enumerates the space and \
+batches a single MCP sequence fetch for every unique part — do NOT loop \
+`get_part` per part. For a part-list preview without sequences, use \
+`enumerateDesigns`.
 """;
 
     private record Pricing(double promptPer1K, double completionPer1K) {}
@@ -159,6 +171,11 @@ and answer concisely.
             remoteMcpTools = new ToolCallback[0];
         }
 
+        // Resolve the MCP `get_parts_batch` callback so SequenceTools can fetch
+        // all sequences for an enumerated design space in one round-trip. Null
+        // when MCP is unreachable; SequenceTools degrades gracefully.
+        Function<List<String>, String> getPartsBatchFn = resolveGetPartsBatch(remoteMcpTools);
+
         ChatResponse response;
         try {
             response = chatClient
@@ -169,7 +186,8 @@ and answer concisely.
                        new DesignTools(designSpaceService),
                        new OperatorTools(designSpaceService),
                        new GoldbarTools(designSpaceService),
-                       new CircuitImportTools(designSpaceService))
+                       new CircuitImportTools(designSpaceService),
+                       new SequenceTools(designSpaceService, getPartsBatchFn))
                 .toolCallbacks(remoteMcpTools)
                 .call().chatResponse();
         } catch (Exception e) {
@@ -252,5 +270,36 @@ and answer concisely.
 
     private static boolean isDisabled(String key) {
         return key == null || key.isBlank() || DISABLED.equals(key);
+    }
+
+    // Locate the MCP `get_parts_batch` tool and expose it as a plain
+    // List<String> -> String function. Returns null if the MCP server is
+    // absent — SequenceTools handles that by annotating each part as
+    // "MCPGeneBank unreachable". Spring AI prefixes MCP tool names with the
+    // client name (e.g. `spring_ai_mcp_client_...get_parts_batch`), so we
+    // match by suffix.
+    private Function<List<String>, String> resolveGetPartsBatch(ToolCallback[] tools) {
+        ToolCallback batch = null;
+        for (ToolCallback tc : tools) {
+            String name = tc.getToolDefinition().name();
+            if (name != null && name.endsWith("get_parts_batch")) {
+                batch = tc;
+                break;
+            }
+        }
+        if (batch == null) return null;
+        final ToolCallback cb = batch;
+        final ObjectMapper om = new ObjectMapper();
+        return (List<String> ids) -> {
+            try {
+                Map<String, Object> args = new HashMap<>();
+                args.put("part_ids", ids);
+                String json = om.writeValueAsString(args);
+                return cb.call(json);
+            } catch (Exception e) {
+                System.out.println("get_parts_batch invocation failed: " + e.getMessage());
+                return "{\"results\":{},\"missing\":" + ids.size() + "}";
+            }
+        };
     }
 }
