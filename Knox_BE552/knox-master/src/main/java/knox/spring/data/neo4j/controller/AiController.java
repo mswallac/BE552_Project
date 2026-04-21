@@ -60,10 +60,15 @@ then either omit the slot and note it in the legend, or skip the TU. Do \
 NOT fill gaps from prior knowledge.
 
 Host coherence:
-- MACHINERY (promoter / RBS / terminator): must mention `E. coli` in \
-  description, or be a classic E. coli family (Anderson, lac, trp, ara, \
-  tet, T7). The DB has many B. subtilis / Staph / Pseudomonas parts — \
-  reject those for machinery slots.
+- MACHINERY (promoter / RBS / terminator): REJECT only if the \
+  `organism` or `description` field explicitly names a non-E.coli host \
+  (B. subtilis, Staphylococcus, Pseudomonas, Mycobacterium, yeast, \
+  Candida, mammalian, etc.). Parts with `organism: unknown` or \
+  `organism: Escherichia coli` are ACCEPTABLE — iGEM frequently omits \
+  organism metadata for standard E. coli parts (B0034 Elowitz RBS, \
+  B0015 double terminator, E0040 GFP, Anderson J23 promoters) so \
+  "unknown" usually means "E. coli by convention". Don't reject a \
+  classic-looking iGEM part just because its organism field is blank.
 - CDS (regulator / reporter / enzyme): host-agnostic, any organism OK.
 - Regulator TF + sensor promoter must come from the same functional \
   system (ArsR↔Pars, MerR↔Pmer, LuxR↔pLux, CueR↔PcopA, etc.). \
