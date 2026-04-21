@@ -19,6 +19,7 @@ target/
 # IDE
 .idea/
 .vscode/
+.claude/
 *.iml
 .ipynb_checkpoints/
 
