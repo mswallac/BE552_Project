@@ -76,11 +76,19 @@ public class Evo2Service {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
                 .build();
+            // The NVIDIA NIM gateway occasionally returns transient 5xx — one
+            // retry with a short backoff gets through in almost every case
+            // (including the 502 Bad Gateway the user hit on a 12 bp slot).
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() >= 500 && resp.statusCode() < 600) {
+                System.out.println("Evo2 transient " + resp.statusCode() + " — retrying in 1.5s");
+                try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            }
             if (resp.statusCode() != 200) {
                 String b = resp.body() == null ? "" : resp.body();
                 return new Evo2Result("", 0.0, 0,
-                    "Evo2 HTTP " + resp.statusCode() + ": " +
+                    "Evo2 HTTP " + resp.statusCode() + " (after retry): " +
                         b.substring(0, Math.min(b.length(), 300)));
             }
             JsonNode node = mapper.readTree(resp.body());

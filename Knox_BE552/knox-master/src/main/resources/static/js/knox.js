@@ -2451,10 +2451,25 @@ let promptContext = "You are an AI assistant (agent) in Knox (with access to cer
 // /designs/sequences and renders a colored slot map + per-slot "Regenerate
 // with Evo 2" buttons that POST to /evo2/fill.
 
+// Inject the wider-modal CSS once — swal's `.sweet-alert` container has a
+// hard 478px width cap that squashes our slot rows. `.sequence-viewer-swal`
+// bumps it to 90vw (max 1200px) so the slot bars and monospace breakdown
+// have room to breathe.
+(function ensureSequenceViewerStyle() {
+  if (document.getElementById('sequence-viewer-style')) return;
+  const style = document.createElement('style');
+  style.id = 'sequence-viewer-style';
+  style.textContent =
+    '.sequence-viewer-swal { width: min(1200px, 90vw) !important;' +
+    '  max-width: min(1200px, 90vw) !important;' +
+    '  padding-bottom: 16px !important; }';
+  document.head.appendChild(style);
+})();
+
 window.openSequenceViewer = async function(spaceID, designIdx) {
   const loading = document.createElement('div');
   loading.textContent = 'Loading design sequence...';
-  swal({title: 'Sequence Viewer', content: loading, className: 'enumeration-swal'});
+  swal({title: 'Sequence Viewer', content: loading, className: 'sequence-viewer-swal'});
   try {
     const resp = await fetch('/designs/sequences?spaceID=' + encodeURIComponent(spaceID) +
                              '&n=' + (designIdx + 1));
@@ -2470,15 +2485,39 @@ window.openSequenceViewer = async function(spaceID, designIdx) {
 };
 
 function renderSequenceViewer(spaceID, designIdx, design) {
+  // Per-slot working sequences. Starts as the original and updates when the
+  // user clicks "Apply proposal" on a regenerated slot. Used by Export to
+  // GenBank to emit the final (possibly edited) construct.
+  const edited = design.slots.map(s => s.sequence);
+  const editedFlags = design.slots.map(() => false);
+
   const container = document.createElement('div');
   container.style.fontFamily = 'sans-serif';
   container.style.textAlign = 'left';
+  container.style.width = '100%';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  // Cap the whole viewer at ~75vh so the slot list scrolls internally and
+  // the footer (Export / Close) always remains visible.
+  container.style.maxHeight = '75vh';
 
   const hdr = document.createElement('div');
+  const hdrStatus = document.createElement('span');
+  hdrStatus.style.marginLeft = '8px';
+  hdrStatus.style.color = '#2e7d32';
   hdr.innerHTML = '<b>' + escHtml(spaceID) + '</b> — design ' + designIdx + ' · ' +
                   design.assembled_length + ' bp · ' + design.slots.length + ' slots' +
                   (design.any_protein ? ' <i>(protein CDS present)</i>' : '');
+  hdr.appendChild(hdrStatus);
   container.appendChild(hdr);
+
+  const refreshStatus = () => {
+    const edits = editedFlags.filter(Boolean).length;
+    const assembled = edited.reduce((a, s, i) => a + (design.slots[i].is_protein ? 0 : s.length), 0);
+    hdrStatus.textContent = edits > 0
+      ? ' · ' + edits + ' edit' + (edits === 1 ? '' : 's') + ' · ' + assembled + ' bp assembled'
+      : '';
+  };
 
   // Horizontal slot map, colored by role. Widths proportional to sequence length.
   const total = Math.max(design.assembled_length, 1);
@@ -2504,10 +2543,23 @@ function renderSequenceViewer(spaceID, designIdx, design) {
     bar.style.overflow = 'hidden';
     bar.title = slot.part_id + ' — ' + friendlyRole(slot.role) +
                 ' · ' + slot.length + (slot.is_protein ? ' aa (protein)' : ' bp');
-    bar.textContent = friendlyRole(slot.role);
+    // Only show text labels when the bar is wide enough to fit them. Hover
+    // still reveals the role via the title tooltip.
+    bar.textContent = pct >= 6 ? friendlyRole(slot.role) : '';
     mapDiv.appendChild(bar);
   });
   container.appendChild(mapDiv);
+
+  // Scrollable slot list — only the slots scroll, so the header/map stay
+  // pinned at top and the footer stays visible at bottom regardless of how
+  // many slots the design has.
+  const slotsWrap = document.createElement('div');
+  slotsWrap.style.flex = '1 1 auto';
+  slotsWrap.style.overflowY = 'auto';
+  slotsWrap.style.minHeight = '0'; // required so flex child can shrink
+  slotsWrap.style.margin = '6px 0';
+  slotsWrap.style.paddingRight = '4px';
+  container.appendChild(slotsWrap);
 
   // Per-slot details + regenerate button
   design.slots.forEach((slot, i) => {
@@ -2583,6 +2635,47 @@ function renderSequenceViewer(spaceID, designIdx, design) {
             '<div style="margin-top:6px;color:#666">Original (' + d.original_length + ' bp):</div>' +
             '<div style="font-family:monospace;font-size:11px;word-break:break-all;' +
               'background:#fff3e0;padding:4px">' + escHtml(d.original_sequence || '') + '</div>';
+
+          // Apply / Revert buttons so the user can commit the Evo 2 proposal
+          // into the working sequence that Export to GenBank will use.
+          const actions = document.createElement('div');
+          actions.style.marginTop = '6px';
+          const applyBtn = document.createElement('button');
+          applyBtn.textContent = editedFlags[i] ? 'Already applied' : 'Apply proposal';
+          applyBtn.disabled = editedFlags[i] || !d.proposed_sequence;
+          applyBtn.onclick = function() {
+            edited[i] = d.proposed_sequence;
+            editedFlags[i] = true;
+            applyBtn.textContent = 'Applied ✓';
+            applyBtn.disabled = true;
+            seqDiv.textContent = d.proposed_sequence.length > 300
+              ? d.proposed_sequence.slice(0, 300) + '… (' + d.proposed_sequence.length + ' total)'
+              : d.proposed_sequence;
+            seqDiv.style.background = '#e8f5e9';
+            head.innerHTML += ' <span style="color:#2e7d32">(edited — Evo 2)</span>';
+            refreshStatus();
+          };
+          const revertBtn = document.createElement('button');
+          revertBtn.textContent = 'Revert';
+          revertBtn.style.marginLeft = '6px';
+          revertBtn.onclick = function() {
+            edited[i] = design.slots[i].sequence;
+            editedFlags[i] = false;
+            applyBtn.textContent = 'Apply proposal';
+            applyBtn.disabled = false;
+            seqDiv.textContent = design.slots[i].sequence.length > 300
+              ? design.slots[i].sequence.slice(0, 300) + '… (' + design.slots[i].sequence.length + ' total)'
+              : design.slots[i].sequence;
+            seqDiv.style.background = '';
+            // Re-render slot header without the edited marker
+            head.innerHTML = '<b>Slot ' + (i + 1) + '</b> · ' + escHtml(design.slots[i].part_id) +
+                             ' <i>(' + escHtml(friendlyRole(design.slots[i].role)) + ', ' +
+                             design.slots[i].length + (design.slots[i].is_protein ? ' aa' : ' bp') + ')</i>';
+            refreshStatus();
+          };
+          actions.appendChild(applyBtn);
+          actions.appendChild(revertBtn);
+          resultDiv.appendChild(actions);
         }
       } catch (e) {
         resultDiv.innerHTML = '<span style="color:#c00">Network error: ' + escHtml(e.message) + '</span>';
@@ -2593,10 +2686,152 @@ function renderSequenceViewer(spaceID, designIdx, design) {
     };
     row.appendChild(btn);
     row.appendChild(resultDiv);
-    container.appendChild(row);
+    slotsWrap.appendChild(row);
   });
 
-  swal({title: 'Sequence Viewer', content: container, className: 'enumeration-swal'});
+  // Footer with Export + Close — in normal flow below the scrolling slot list
+  const footer = document.createElement('div');
+  footer.style.flex = '0 0 auto';
+  footer.style.background = '#fff';
+  footer.style.padding = '10px 0 0';
+  footer.style.borderTop = '1px solid #ccc';
+  footer.style.display = 'flex';
+  footer.style.gap = '8px';
+  footer.style.justifyContent = 'flex-end';
+
+  const exportBtn = document.createElement('button');
+  exportBtn.textContent = 'Export to GenBank';
+  exportBtn.style.background = '#2e7d32';
+  exportBtn.style.color = '#fff';
+  exportBtn.style.border = 'none';
+  exportBtn.style.padding = '6px 12px';
+  exportBtn.style.borderRadius = '3px';
+  exportBtn.style.cursor = 'pointer';
+  exportBtn.onclick = function() {
+    exportDesignAsGenBank(spaceID, designIdx, design, edited, editedFlags);
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.onclick = function() { swal.close(); };
+
+  footer.appendChild(exportBtn);
+  footer.appendChild(closeBtn);
+  container.appendChild(footer);
+
+  // Suppress swal's default OK button so our footer is the canonical exit.
+  // Use the custom sequence-viewer-swal class (wider than .enumeration-swal).
+  swal({
+    title: 'Sequence Viewer',
+    content: container,
+    className: 'sequence-viewer-swal',
+    buttons: false,
+    closeOnClickOutside: false,
+  });
+}
+
+// Generate a minimal GenBank record from the working sequences and trigger a
+// browser download. Protein-CDS slots are listed as features but contribute
+// zero bp to the assembled construct (same behavior as concat in /evo2/fill).
+function exportDesignAsGenBank(spaceID, designIdx, design, edited, editedFlags) {
+  const today = new Date().toISOString().slice(0, 10); // 2026-04-21
+  const dd = String(new Date().getDate()).padStart(2, '0');
+  const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const mm = monthNames[new Date().getMonth()];
+  const yyyy = new Date().getFullYear();
+  const gbDate = dd + '-' + mm + '-' + yyyy;
+
+  // Assemble final sequence from working slots (skip protein CDS)
+  let seq = '';
+  const features = [];
+  design.slots.forEach((slot, i) => {
+    if (slot.is_protein) {
+      features.push({
+        type: featureTypeForRole(slot.role),
+        start: null, end: null,
+        partId: slot.part_id, role: friendlyRole(slot.role),
+        edited: false, protein: true, length: slot.length,
+      });
+      return;
+    }
+    const s = (edited[i] || '').toUpperCase();
+    const start = seq.length + 1; // GenBank is 1-indexed
+    seq += s;
+    const end = seq.length;
+    features.push({
+      type: featureTypeForRole(slot.role),
+      start: start, end: end,
+      partId: slot.part_id, role: friendlyRole(slot.role),
+      edited: editedFlags[i], protein: false, length: s.length,
+    });
+  });
+
+  const locusName = (spaceID + '_d' + designIdx).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 16);
+  const anyEdit = editedFlags.some(Boolean);
+  const lines = [];
+  lines.push('LOCUS       ' + locusName.padEnd(16, ' ') + ' ' +
+             String(seq.length).padStart(11, ' ') + ' bp    DNA     linear   SYN ' + gbDate);
+  lines.push('DEFINITION  Knox design space ' + spaceID + ', design ' + designIdx +
+             (anyEdit ? ' (with Evo 2 edits)' : '') + '.');
+  lines.push('ACCESSION   ' + locusName);
+  lines.push('VERSION     ' + locusName + '.1');
+  lines.push('KEYWORDS    Knox; combinatorial; synthetic biology' + (anyEdit ? '; Evo2-edited' : '') + '.');
+  lines.push('SOURCE      synthetic DNA construct');
+  lines.push('  ORGANISM  synthetic DNA construct');
+  lines.push('COMMENT     Generated by Knox Sequence Viewer on ' + today + '.');
+  lines.push('            ' + design.slots.length + ' slots, ' + seq.length + ' bp total.');
+  if (anyEdit) {
+    lines.push('            Evo 2 generative fills applied at slot(s): ' +
+               editedFlags.map((f, i) => f ? (i + 1) : null).filter(x => x != null).join(', '));
+  }
+
+  lines.push('FEATURES             Location/Qualifiers');
+  lines.push('     source          1..' + seq.length);
+  lines.push('                     /organism="synthetic DNA construct"');
+  lines.push('                     /mol_type="other DNA"');
+  features.forEach((f, i) => {
+    if (f.protein) {
+      lines.push('     ' + f.type.padEnd(16, ' ') + '/* protein CDS, ' + f.length + ' aa, not in assembled DNA */');
+      lines.push('                     /label="' + f.partId + '"');
+      lines.push('                     /note="Knox slot ' + (i + 1) + ' (protein, skipped in concat)"');
+      return;
+    }
+    lines.push('     ' + f.type.padEnd(16, ' ') + f.start + '..' + f.end);
+    lines.push('                     /label="' + f.partId + '"');
+    const note = 'Knox slot ' + (i + 1) + ' (' + f.role + ')' + (f.edited ? ' — Evo 2 generative fill' : '');
+    lines.push('                     /note="' + note + '"');
+  });
+
+  lines.push('ORIGIN');
+  const lower = seq.toLowerCase();
+  for (let i = 0; i < lower.length; i += 60) {
+    let row = String(i + 1).padStart(9, ' ');
+    for (let j = 0; j < 60 && i + j < lower.length; j += 10) {
+      row += ' ' + lower.slice(i + j, i + j + 10);
+    }
+    lines.push(row);
+  }
+  lines.push('//');
+
+  const blob = new Blob([lines.join('\n') + '\n'], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = locusName + '.gb';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function featureTypeForRole(role) {
+  switch (friendlyRole(role)) {
+    case 'promoter':   return 'promoter';
+    case 'RBS':        return 'RBS';
+    case 'CDS':        return 'CDS';
+    case 'terminator': return 'terminator';
+    default:           return 'misc_feature';
+  }
 }
 
 function friendlyRole(role) {

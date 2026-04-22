@@ -154,7 +154,7 @@ public class SequenceTools {
                 out.append(String.format(
                     "&nbsp;&nbsp;%d. %s <i>(%s)</i> — %d %s%s<br>",
                     s.index() + 1, s.partId(),
-                    s.role().isEmpty() ? "?" : s.role(),
+                    friendlyRole(s.role()),
                     s.sequence().length(),
                     s.isProtein() ? "aa (protein — skipped in concat)"
                                   : (s.sequence().isEmpty() ? "" : "bp"),
@@ -213,6 +213,25 @@ public class SequenceTools {
     }
 
     // ── helpers ──────────────────────────────────────────────────────
+
+    // Map raw role strings (SO URIs like "http://identifiers.org/so/SO:0000167"
+    // or Knox friendly names like "ribosome_entry_site") to short, readable
+    // labels for the Fetch Sequences HTML breakdown. The frontend has a
+    // matching friendlyRole() — keep them in sync if you add new roles.
+    private static String friendlyRole(String role) {
+        if (role == null || role.isEmpty()) return "?";
+        if (role.contains("SO:0000167")) return "promoter";
+        if (role.contains("SO:0000139")) return "RBS";
+        if (role.contains("SO:0000141")) return "terminator";
+        if (role.contains("SO:0000316")) return "CDS";
+        String lower = role.toLowerCase();
+        if (lower.equals("ribosome_entry_site") || lower.equals("rbs")) return "RBS";
+        if (role.equals("CDS") || lower.equals("coding")) return "CDS";
+        if (lower.contains("promoter")) return "promoter";
+        if (lower.contains("terminator")) return "terminator";
+        if (lower.contains("rbs")) return "RBS";
+        return role.length() > 20 ? "…" + role.substring(role.length() - 15) : role;
+    }
 
     private static boolean isBlank(Map<String, Object> part) {
         Object b = part.get("isBlank");
