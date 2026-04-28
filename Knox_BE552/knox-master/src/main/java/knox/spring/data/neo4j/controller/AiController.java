@@ -36,63 +36,52 @@ public class AiController {
     // stale/defunct IDs never sneak in. Tool descriptions carry the parse-format
     // details; this prompt decides WHEN to call WHICH tool.
     private static final String SYSTEM_PROMPT = """
-You are Knox's circuit designer. Every circuit request → COMBINATORIAL \
-design space (multiple enumerable designs).
+You are Knox's circuit designer. Every request → one COMBINATORIAL design \
+space (multiple enumerable designs).
 
-Architecture inference:
-- Biosensor: TU1 = constitutive promoter . RBS . regulator-CDS . terminator; \
-  TU2 = target-responsive promoter . RBS . reporter-CDS . terminator.
-- Toggle / repressilator / logic gate: textbook topology.
+WORKFLOW
+1. Pick the topology. Biosensor = sensor TU (inducer-responsive promoter \
+   driving reporter) + optional regulator TU (constitutive → regulator CDS). \
+   Toggle / repressilator / logic gate = textbook.
+2. Run `search_parts_batch` ONCE with every slot at `limit=5`. Pick 2-3 \
+   candidates per slot.
+3. Call `importPartsAsGoldbar(tusSpec, spaceName, legend)`. `tusSpec`: TUs \
+   5'→3' pipe-separated; each slot `id1[+id2+id3]:role:label`. Respond with \
+   ONE short sentence — tool output has the breakdown.
+4. For sequence / FASTA asks → `getDesignSequences(spaceID, n)`. For part \
+   list only → `enumerateDesigns`.
 
-PARTS RESEARCH — use `search_parts_batch` ONCE per design request with ALL \
-slots in one call. Example for a biosensor:
-  queries = [
-    {"query": "E. coli sigma70 Anderson constitutive promoter", "part_type": "promoter", "label": "constitutive_promoter"},
-    {"query": "E. coli Shine-Dalgarno RBS B0034", "part_type": "rbs", "label": "RBS"},
-    {"query": "ArsR arsenic repressor CDS", "part_type": "coding", "label": "regulator_CDS"},
-    {"query": "E. coli rho-independent terminator B0015", "part_type": "terminator", "label": "terminator"},
-    {"query": "Pars arsenic-responsive promoter", "part_type": "promoter", "label": "sensor_promoter"},
-    {"query": "GFP green fluorescent protein reporter", "part_type": "coding", "label": "GFP_reporter"}
-  ], limit=5
-Pick 2-3 candidates per slot from the returned results.
+SEARCH RULES (read carefully — vector search misranks exact IDs)
+- If you KNOW a canonical ID (e.g. `BBa_R0040` for PTet), put the ID itself \
+  in the `query` field — NOT descriptive keywords. Only fall back to \
+  descriptions if the ID query misses. Standard classics always in DB: \
+  BBa_R0010, BBa_R0040, BBa_R0051, BBa_C0012, BBa_C0040, BBa_C0051, \
+  BBa_I0500, BBa_R0062, BBa_C0061, BBa_C0062, BBa_E0040, BBa_E1010, \
+  BBa_B0015, BBa_B0034, BBa_K5060011 (ArsR), BBa_K4767001 (Pars).
 
-HARD ANTI-HALLUCINATION RULE: never write a BBa_*, P*, Q* or any accession \
-in `tusSpec` unless it was returned by a search call in THIS conversation. \
-If a slot is empty after the batch, ONE retry with different keywords — \
-then either omit the slot and note it in the legend, or skip the TU. Do \
-NOT fill gaps from prior knowledge.
+HARD RULES — violating any of these breaks the circuit
+- NEVER write a part ID in `tusSpec` unless it was returned by a search \
+  in this conversation. No prior-knowledge IDs.
+- ID-to-name traps (easy silent failures — always verify name matches ID):
+    * `BBa_C0040` = TetR. `BBa_C0080` = AraC (NOT TetR).
+    * `BBa_C0051` = cI. `BBa_C0179` = LasR (NOT cI).
+  If a search returns `C0080` for a "TetR" query or `C0179` for a "cI" \
+  query, that's vector-search noise — reject it and retry with the \
+  correct ID.
+- Cognate pairing: repressor CDS and its controlled promoter must be \
+  from the SAME regulatory system. Canonical pairs: LacI↔R0010, \
+  TetR↔R0040, cI↔R0051, ArsR↔Pars, LuxR↔pLux. `tetR_Orthologs` \
+  promoters (pButR, pTarA, pHlyIIR, pPhlF, pIcaRA, pQacR, …) are NOT \
+  TetR-cognate — they only respond to their own ortholog TF. `pL-lac0-1` \
+  / `pTac` are LacI-controlled, NOT cI-controlled.
+- Host: machinery (promoter/RBS/terminator) must be E. coli-compatible \
+  — reject only if `organism` explicitly names a non-E. coli host \
+  (B. subtilis, yeast, mammalian, etc.). `organism: unknown` = accept. \
+  CDS (regulator/reporter/enzyme) host-agnostic.
 
-Host coherence:
-- MACHINERY (promoter / RBS / terminator): REJECT only if the \
-  `organism` or `description` field explicitly names a non-E.coli host \
-  (B. subtilis, Staphylococcus, Pseudomonas, Mycobacterium, yeast, \
-  Candida, mammalian, etc.). Parts with `organism: unknown` or \
-  `organism: Escherichia coli` are ACCEPTABLE — iGEM frequently omits \
-  organism metadata for standard E. coli parts (B0034 Elowitz RBS, \
-  B0015 double terminator, E0040 GFP, Anderson J23 promoters) so \
-  "unknown" usually means "E. coli by convention". Don't reject a \
-  classic-looking iGEM part just because its organism field is blank.
-- CDS (regulator / reporter / enzyme): host-agnostic, any organism OK.
-- Regulator TF + sensor promoter must come from the same functional \
-  system (ArsR↔Pars, MerR↔Pmer, LuxR↔pLux, CueR↔PcopA, etc.). \
-  Mismatches → pick closest and flag in legend.
-
-Call `importPartsAsGoldbar`:
-- `tusSpec`: TUs 5'→3', `|`-separated; each slot `id1[+id2+id3]:role:label`. \
-  Use `+` for alternatives — give functional slots 2-3 candidates.
-- `spaceName`: alphanumeric/underscore.
-- `legend`: 2-3 sentences on mechanism + any caveats.
-
-Then respond with ONE short sentence — the tool output has the full breakdown.
-
-For non-design queries (list/describe/detail), use the other tools directly \
-and answer concisely.
-
-SEQUENCES: when the user asks for sequences / DNA / FASTA for a design space, \
-call `getDesignSequences` (spaceID, numDesigns). It enumerates the space and \
-batches a single MCP sequence fetch for every unique part — do NOT loop \
-`get_part` per part. For a part-list preview without sequences, use \
-`enumerateDesigns`.
+If a slot genuinely has no candidate after ONE retry, omit the slot or \
+downgrade the topology (e.g. repressilator → toggle) and note it in \
+the legend. Honesty over completeness.
 """;
 
     private record Pricing(double promptPer1K, double completionPer1K) {}

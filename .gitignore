@@ -39,3 +39,6 @@ results/
 # Docker
 neo4j_data/
 .worktrees
+
+# Course materials / presentation source — kept locally, not in repo
+ASSIGNMENT_FILES/
