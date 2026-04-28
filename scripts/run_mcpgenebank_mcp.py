@@ -40,11 +40,16 @@ HERE = Path(__file__).resolve().parent
 # running from a git worktree — MCPGeneBank is a nested repo that only exists
 # in the primary checkout, not in worktrees).
 _CANDIDATES = [
+    # New BE552 deliverable layout — code lives under "Final Project BioPilot/Code/"
+    HERE.parent / "Final Project BioPilot" / "Code" / "MCPGeneBank" / "bio-circuit-ai",
+    # Backwards-compat: legacy flat layout (pre-relocation)
     HERE.parent / "MCPGeneBank" / "bio-circuit-ai",
 ]
 for anc in HERE.parents:
     if anc.name == "BE552_Project":
+        _CANDIDATES.append(anc / "Final Project BioPilot" / "Code" / "MCPGeneBank" / "bio-circuit-ai")
         _CANDIDATES.append(anc / "MCPGeneBank" / "bio-circuit-ai")
+    _CANDIDATES.append(anc.parent / "BE552_Project" / "Final Project BioPilot" / "Code" / "MCPGeneBank" / "bio-circuit-ai")
     _CANDIDATES.append(anc.parent / "BE552_Project" / "MCPGeneBank" / "bio-circuit-ai")
 
 MCPGB_SRC = next((p for p in _CANDIDATES if p.exists()), None)

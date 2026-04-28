@@ -45,9 +45,9 @@ User prompt
 
 | Path | Description | Stack |
 |------|-------------|-------|
-| [`Knox_BE552/`](Knox_BE552/) | LLM agent, GOLDBAR design space, Sequence Viewer UI, Evo 2 fill REST endpoints | Java 17, Spring Boot 3.5, Spring AI 1.1.1, Spring Data Neo4j 7, libSBOLj 2.4, Maven |
-| [`MCPGeneBank/`](MCPGeneBank/) | Curated parts database, MCP server (Cello + iGEM canonicals + iGEM-distribution kit + UniProt) | Python 3.11, FastMCP, Qdrant, sentence-transformers, httpx |
-| [`generative-syn-bio/`](generative-syn-bio/) | Local Evo 2 pipeline, scorer, Cello UCF parser | Python 3.11, PyTorch, ViennaRNA, evo2 (`evo2_1b_base`/`evo2_7b`) |
+| [`Final Project BioPilot/Code/Knox_BE552/`](Final%20Project%20BioPilot/Code/Knox_BE552/) | LLM agent, GOLDBAR design space, Sequence Viewer UI, Evo 2 fill REST endpoints | Java 17, Spring Boot 3.5, Spring AI 1.1.1, Spring Data Neo4j 7, libSBOLj 2.4, Maven |
+| [`Final Project BioPilot/Code/MCPGeneBank/`](Final%20Project%20BioPilot/Code/MCPGeneBank/) | Curated parts database, MCP server (Cello + iGEM canonicals + iGEM-distribution kit + UniProt) | Python 3.11, FastMCP, Qdrant, sentence-transformers, httpx |
+| [`Final Project BioPilot/Code/generative-syn-bio/`](Final%20Project%20BioPilot/Code/generative-syn-bio/) | Local Evo 2 pipeline, scorer, Cello UCF parser | Python 3.11, PyTorch, ViennaRNA, evo2 (`evo2_1b_base`/`evo2_7b`) |
 
 The deliverable folder `Final Project BioPilot/` contains the project
 report and a pointer back to this code; see the [grading note](#be552-deliverable-layout)
@@ -73,7 +73,7 @@ at the bottom of this README.
 | `OPENAI_API_KEY` | (optional) Alternate LLM provider | https://platform.openai.com |
 | `CLAUDE_API_KEY` | (optional) Alternate LLM provider | https://console.anthropic.com |
 
-Place these in `Knox_BE552/knox-master/.env` (gitignored). Example:
+Place these in `Final Project BioPilot/Code/Knox_BE552/knox-master/.env` (gitignored). Example:
 
 ```
 GEMINI_API_KEY=AIza...
@@ -95,24 +95,24 @@ git clone --recurse-submodules https://github.com/mswallac/BE552_Project.git
 cd BE552_Project
 
 # 2. (One-time) Install MCPGeneBank Python deps
-cd MCPGeneBank/bio-circuit-ai
+cd "Final Project BioPilot/Code/MCPGeneBank/bio-circuit-ai"
 pip install -r requirements.txt
 cd ../..
 
 # 3. (One-time) Build the parts database
 #    Pulls Cello UCFs, iGEM canonicals, iGEM-distribution kit, UniProt
-cd MCPGeneBank/bio-circuit-ai
+cd "Final Project BioPilot/Code/MCPGeneBank/bio-circuit-ai"
 python scrape_clean.py   # ~5-10 min, populates data/qdrant_store/
 cd ../..
 
-# 4. Set up API keys (see above) in Knox_BE552/knox-master/.env
+# 4. Set up API keys (see above) in Final Project BioPilot/Code/Knox_BE552/knox-master/.env
 
 # 5. Terminal 1 — start MCP server on the HOST (not containerized)
 python scripts/run_mcpgenebank_mcp.py
 # Listens on http://127.0.0.1:8000/sse
 
 # 6. Terminal 2 — start Knox + Neo4j
-cd Knox_BE552/knox-master
+cd "Final Project BioPilot/Code/Knox_BE552/knox-master"
 docker-compose up --build
 # Knox UI:  http://localhost:8080
 # Neo4j:    http://localhost:7474
@@ -126,7 +126,7 @@ docker-compose up --build
 ### Knox alone (no LLM, no MCP)
 
 ```bash
-cd Knox_BE552/knox-master
+cd "Final Project BioPilot/Code/Knox_BE552/knox-master"
 docker-compose up --build      # Docker (preferred)
 # or
 mvn clean install
@@ -136,14 +136,14 @@ mvn spring-boot:run            # Requires local Neo4j on :7687
 ### MCPGeneBank quick demo
 
 ```bash
-cd MCPGeneBank/bio-circuit-ai
+cd "Final Project BioPilot/Code/MCPGeneBank/bio-circuit-ai"
 python demo.py                 # In-memory, no external services
 ```
 
 ### generative-syn-bio tests
 
 ```bash
-cd generative-syn-bio
+cd "Final Project BioPilot/Code/generative-syn-bio"
 pip install -e ".[dev]"
 pytest tests/ -k "not integration" -v   # 104 tests, no GPU required
 ```
@@ -181,8 +181,8 @@ generated from the upstream 5' context.
 ## Pulling collaborator updates
 
 ```bash
-cd MCPGeneBank && git pull origin main && cd ..
-cd generative-syn-bio && git pull origin main && cd ..
+cd "Final Project BioPilot/Code/MCPGeneBank" && git pull origin main && cd ..
+cd "Final Project BioPilot/Code/generative-syn-bio" && git pull origin main && cd ..
 git add MCPGeneBank generative-syn-bio
 git commit -m "bump submodules"
 ```

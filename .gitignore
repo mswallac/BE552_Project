@@ -42,3 +42,7 @@ neo4j_data/
 
 # Course materials / presentation source — kept locally, not in repo
 ASSIGNMENT_FILES/
+
+# Stale empty dir from Knox_BE552 → Final Project relocation; reboot to remove
+/Knox_BE552/
+/MCPGeneBank/

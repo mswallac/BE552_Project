@@ -154,9 +154,17 @@ def fetch_parts(
         List of BioPart dicts with all fields.
     """
     if not mcpgenebank_dir:
-        mcpgenebank_dir = str(
-            Path(__file__).resolve().parent.parent / "MCPGeneBank" / "bio-circuit-ai"
-        )
+        root = Path(__file__).resolve().parent.parent
+        # New BE552 deliverable layout first, fall back to legacy flat layout.
+        for cand in (
+            root / "Final Project BioPilot" / "Code" / "MCPGeneBank" / "bio-circuit-ai",
+            root / "MCPGeneBank" / "bio-circuit-ai",
+        ):
+            if cand.exists():
+                mcpgenebank_dir = str(cand)
+                break
+        else:
+            mcpgenebank_dir = str(root / "MCPGeneBank" / "bio-circuit-ai")
     _setup_mcpgenebank_path(mcpgenebank_dir)
 
     if use_demo_seed:

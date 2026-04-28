@@ -1,6 +1,6 @@
 [submodule "generative-syn-bio"]
-	path = generative-syn-bio
+	path = Final Project BioPilot/Code/generative-syn-bio
 	url = https://github.com/joshkome/generative-syn-bio.git
 [submodule "MCPGeneBank"]
-	path = MCPGeneBank
+	path = Final Project BioPilot/Code/MCPGeneBank
 	url = https://github.com/Charmander542/MCPGeneBank.git
